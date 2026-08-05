@@ -32,11 +32,11 @@ Nothing is loaded. Nothing is drawn from static assets. Reality is evaluated eve
 ## 🎨 Visual Language & Hardware Design
 
 Imagine if an authentic GameBoy had been invented by modern creative technologists and mathematicians:
+- **Full Vertical Screen Space Utilization**: All game cartridges (`Wave Snake`, `Wave Runner`, `Orbit Survivor`, `Particle Dodge`, etc.) utilize the full vertical $480 \times 320$ screen viewport so zero screen space is wasted!
 - **Enlarged Widescreen Viewport**: Widescreen playing screen ratio ($54\%$ console height ratio $\times 90\%$ console width ratio) making the gameplay display large, bold, and crystal clear!
 - **Classic GameBoy Slate Gray Casing**: Authentic retro industrial slate gray superellipse body shell (`#c4cad4` to `#a0a8b6`).
 - **Dark Slate Screen Bezel**: High-contrast dark charcoal screen frame (`#2c323f` to `#1e232e`) that makes full-color screen graphics pop.
-- **Glassmorphic Studio Sidebar**: Desktop sidebar on the right with key legends (`[WASD / ARROWS]`, `[Z / SPACE]`, `[X]`, `[TAB]`, `[M]`, `[T]`, `[F]`), 3D theme cards with glowing active borders, font mode chips, and live math parameter sliders with circular `[-]` / `[+]` buttons.
-- **Full-Color Natural Environments**: Cerulean sky blue gradients, golden suns, white Perlin clouds, timber brown tree trunks (`#78350f`), emerald green foliage (`#22c55e`), and vibrant player avatars.
+- **Clean Compact Studio Sidebar**: Streamlined $250$px desktop sidebar with key legends (`[WASD / ARROWS]`, `[Z / SPACE]`, `[X]`, `[TAB]`, `[M]`, `[T]`, `[F]`), 3D theme cards, 3 cleanest font engines (`bezier`, `fourier`, `wave`), and live math parameter sliders with circular `[-]` / `[+]` buttons.
 
 ---
 
@@ -44,39 +44,34 @@ Imagine if an authentic GameBoy had been invented by modern creative technologis
 
 ### 1. 🔤 Procedural Vector Typography Engine
 - **Zero Font Files**: Every character (A–Z, 0–9, symbols, `(`, `)`, `=`, `%`, `,`, `'`) is defined mathematically and rendered dynamically.
-- **9 Font Modes**:
-  1. `bezier`: Smooth parametric curves.
+- **3 Cleanest Font Engines**:
+  1. `bezier`: Crisp smooth parametric curves.
   2. `fourier`: Glyphs reconstructed via rotating Fourier epicycles ($\sum c_n e^{i n \omega t}$).
   3. `wave`: Modulates strokes via trigonometric sine/cosine waves ($y' = y + A \sin(f x + \omega t)$).
-  4. `sdf`: Distance-field thresholded letterforms.
-  5. `noise`: Perlin noise-displaced stroke paths.
-  6. `skeleton`: Clean vector stroke centerlines.
-  7. `geometric`: Sharp primitive circle & line compositions.
-  8. `parametric`: Polar trigonometric equations ($r(\theta)$).
-  9. `lissajous`: Harmonic orthogonal oscillation curves ($x = \sin(a t), y = \sin(b t)$).
 
 ### 2. 🎵 Polyphonic Procedural Synthesizer Engine
 - **Zero Audio Assets**: Multi-voice chiptune synthesis using Web Audio API math.
+- **Live Oscilloscope Synthesizer Waveform Visualizer**: Web Audio `AnalyserNode` rendering live real-time oscilloscope waveforms across the status bar in Dev Mode (`TAB`)!
+- **Dynamic Audio Tempo Acceleration**: BGM tempo accelerates dynamically as score increases or boss phases trigger ($1.0\times \to 1.45\times$ tempo boost).
 - **Auto-Gesture Audio Unlocking**: Resumes `AudioContext` automatically on user gesture across all modern browsers.
-- **3-Voice Polyphony + Percussion**:
-  - Voice 1: Lead Melody (Sine/Square with vibrato & glide).
-  - Voice 2: Harmony Arpeggiator (Triangle wave).
-  - Voice 3: Deep Bassline (Sawtooth wave with filter decay).
-  - Voice 4: Percussion (Procedural white noise snare/hi-hat).
-- **Procedural Sound FX**: Harmonic chord boot chime, arcade jump sweeps, laser shots, item pickup chimes, multi-stage noise explosions.
 
-### 3. 🎮 9 Included Mathematical Cartridges
-1. **Wave Runner**: Multi-harmonic terrain ($y(x) = y_0 + A_1 \sin(f_1 x) + A_2 \sin(f_2 x + 1.4) + A_3 \cos(f_3 x + 2.8)$) with endless positive modulo cloud & tree wrapping (`posMod`), balanced single-press jump controls.
+### 3. 📳 Dynamic Screen Shake & Impact Physics
+- **Exponential Damped Oscillation Camera Shake**:
+  $$dx(t) = A \cdot e^{-\gamma t} \sin(\omega_1 t), \quad dy(t) = A \cdot e^{-\gamma t} \cos(\omega_2 t)$$
+- Triggers camera shake on jump landings, obstacle collisions, laser impacts, EMP blasts, and Game Over!
+
+### 4. 🎮 9 Included Mathematical Cartridges
+1. **Wave Runner**: Multi-harmonic terrain ($y(x) = y_0 + A_1 \sin(f_1 x) + A_2 \sin(f_2 x + 1.4) + A_3 \cos(f_3 x + 2.8)$) with lower ground level ($y=255$) for full vertical headroom, endless positive modulo cloud & tree wrapping (`posMod`), balanced single-press jump controls.
 2. **Orbit Survivor**: Single-press plasma counter-missile laser shooting, orbital Lissajous track, glowing cyan player orb, ruby enemies.
 3. **Particle Dodge**: Vector field grid with speed-colored boid arrows, glowing amber player vessel, EMP shockwave pulse on Button A.
-4. **Wave Snake**: Emerald green undulated snake, golden glowing apples, soft meadow background, single-press restart logic.
+4. **Wave Snake**: Emerald green undulated snake utilizing full vertical screen bounds ($15 \le y \le 305$), golden glowing apples, soft meadow background, single-press restart logic.
 5. **Fractal Forest**: Natural timber wood trunks branching into foliage with seasonal morphing (Spring, Autumn, Sakura, Cyber Neon) on Button A.
 6. **Ripple Wave Lab**: Deep ocean blue water ripple simulation with turquoise caustics, single-press splashes, and automatic raindrop generator.
 7. **Chaos Laboratory**: Interactive 3D camera rotation using D-Pad across Lorenz Attractor & Logistic Map bifurcation.
 8. **Fourier Epicycle Painter**: Reconstruct multi-shape vector artwork (Star, Heart, Butterfly) via rotating Fourier series epicycles.
 9. **Lissajous Arena**: Multi-phase boss battle with dynamic Lissajous kinematics ($x=\sin(1.8t), y=\sin(2.7t)$), polar rose forcefields, targeted plasma projectiles, 8-way radial shockwaves, and player combat.
 
-### 4. 🛠️ Developer Mode & Education Mode
+### 5. 🛠️ Developer Mode & Education Mode
 - **Developer Mode (`TAB` key)**: Transforms console & side panel into live equation editor. Click `[-]` / `[+]` or press Arrow Keys to tune variables ($A$, $f$, $v$, $\text{epicycles}$) in real-time.
 - **Math Education Overlay (`M` key)**: Displays interactive mathematical lessons and function plots for every active game.
 - **11 Procedural Themes (`T` key)**: Classic GameBoy Gray, Graph Paper, Holographic Spectrum, Pastel Aurora, Cyberpunk 2099, 80s Synthwave, Neon Vector, Aurora, Deep Galaxy, Magma Core, Oscilloscope.

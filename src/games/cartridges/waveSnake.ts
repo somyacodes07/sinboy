@@ -1,6 +1,6 @@
 /**
  * Cartridge 4: Wave Snake
- * "Snake body segments follow continuous trigonometric sine wave equations in a vibrant meadow environment."
+ * "Snake body segments follow continuous trigonometric sine wave equations utilizing full vertical screen space."
  */
 
 import { BaseCartridge, EquationInfo } from '../gameEngine';
@@ -21,12 +21,12 @@ export class WaveSnakeCartridge implements BaseCartridge {
   dirX = 1;
   dirY = 0;
   headX = 240;
-  headY = 150;
+  headY = 160;
   history: { x: number; y: number }[] = [];
-  snakeLength = 20;
+  snakeLength = 25;
 
   foodX = 320;
-  foodY = 150;
+  foodY = 160;
   score = 0;
   gameOver = false;
 
@@ -52,7 +52,7 @@ export class WaveSnakeCartridge implements BaseCartridge {
 
   reset(): void {
     this.headX = 240;
-    this.headY = 150;
+    this.headY = 160;
     this.dirX = 1;
     this.dirY = 0;
     this.history = [];
@@ -64,8 +64,8 @@ export class WaveSnakeCartridge implements BaseCartridge {
   }
 
   spawnFood() {
-    this.foodX = Math.floor(Math.random() * 380) + 50;
-    this.foodY = Math.floor(Math.random() * 220) + 40;
+    this.foodX = Math.floor(Math.random() * 400) + 40;
+    this.foodY = Math.floor(Math.random() * 250) + 35; // Uses full vertical screen height!
   }
 
   update(dt: number, input: HardwareInputState, soundEngine: any): void {
@@ -79,7 +79,7 @@ export class WaveSnakeCartridge implements BaseCartridge {
     if (input.dpadUp && this.dirY !== 1) { this.dirX = 0; this.dirY = -1; }
     if (input.dpadDown && this.dirY !== -1) { this.dirX = 0; this.dirY = 1; }
 
-    const speed = 140;
+    const speed = 145;
     this.headX += this.dirX * speed * dt;
     this.headY += this.dirY * speed * dt;
 
@@ -88,7 +88,8 @@ export class WaveSnakeCartridge implements BaseCartridge {
       this.history.pop();
     }
 
-    if (this.headX < 15 || this.headX > 465 || this.headY < 15 || this.headY > 285) {
+    // Full vertical screen collision bounds (15 <= Y <= 305)
+    if (this.headX < 12 || this.headX > 468 || this.headY < 15 || this.headY > 305) {
       this.gameOver = true;
       soundEngine.playExplosion();
     }
@@ -110,12 +111,17 @@ export class WaveSnakeCartridge implements BaseCartridge {
     fontParams: FontParams,
     time: number
   ): void {
-    // Soft Meadow Background Gradient
+    // Soft Meadow Background Gradient (Full Screen)
     const meadowGrad = ctx.createLinearGradient(0, 0, 0, height);
     meadowGrad.addColorStop(0, '#f0fdf4');
     meadowGrad.addColorStop(1, '#dcfce7');
     ctx.fillStyle = meadowGrad;
     ctx.fillRect(0, 0, width, height);
+
+    // Meadow Playfield Border Lines
+    ctx.strokeStyle = '#86efac';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(8, 8, width - 16, height - 16);
 
     // Golden Apple Food (Pulsing Glow)
     const foodPulse = 8 + Math.sin(time * 6.0) * 2;
@@ -125,7 +131,7 @@ export class WaveSnakeCartridge implements BaseCartridge {
     ctx.beginPath();
     ctx.arc(this.foodX, this.foodY, foodPulse, 0, TWO_PI);
     ctx.fill();
-    ctx.fillStyle = '#15803d'; // Stem
+    ctx.fillStyle = '#15803d';
     ctx.fillRect(this.foodX - 1, this.foodY - foodPulse - 4, 3, 5);
     ctx.shadowBlur = 0;
 
@@ -161,10 +167,10 @@ export class WaveSnakeCartridge implements BaseCartridge {
       ctx.fill();
     }
 
-    ProceduralFontEngine.renderText(ctx, `SCORE: ${this.score}`, 20, 30, 14, '#0f172a', fontParams, time);
+    ProceduralFontEngine.renderText(ctx, `SCORE: ${this.score}`, 20, 25, 14, '#0f172a', fontParams, time);
 
     if (this.gameOver) {
-      ProceduralFontEngine.renderText(ctx, 'GAME OVER - PRESS A', width * 0.2, height * 0.5, 18, '#dc2626', fontParams, time);
+      ProceduralFontEngine.renderText(ctx, 'GAME OVER - PRESS A TO RESTART', width * 0.12, height * 0.5, 16, '#dc2626', fontParams, time);
     }
   }
 

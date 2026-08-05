@@ -1,6 +1,6 @@
 /**
  * Cartridge 1: Wave Runner
- * "Multi-harmonic terrain runner with infinite smooth scrolling clouds/trees & single-press jump controls."
+ * "Multi-harmonic terrain runner utilizing full vertical screen space with lower ground terrain."
  */
 
 import { BaseCartridge, EquationInfo } from '../gameEngine';
@@ -43,7 +43,7 @@ export class WaveRunnerCartridge implements BaseCartridge {
     const w1 = Math.sin(worldX * this.waveFreq) * this.waveAmp;
     const w2 = Math.sin(worldX * (this.waveFreq * 2.3) + 1.4) * (this.waveAmp * 0.4);
     const w3 = Math.cos(worldX * (this.waveFreq * 4.1) + 2.8) * (this.waveAmp * 0.2);
-    return 215 + w1 + w2 + w3;
+    return 255 + w1 + w2 + w3; // Lower ground level to y=255 for max vertical headroom!
   }
 
   getEquations(): EquationInfo[] {
@@ -71,7 +71,7 @@ export class WaveRunnerCartridge implements BaseCartridge {
 
   reset(): void {
     this.playerX = 85;
-    this.playerY = 180;
+    this.playerY = 220;
     this.playerVy = 0;
     this.isGrounded = false;
     this.score = 0;
@@ -93,7 +93,6 @@ export class WaveRunnerCartridge implements BaseCartridge {
     const scrollX = this.score * this.speed * 0.1;
     const groundY = this.getTerrainY(this.playerX, scrollX);
 
-    // Responsive Single-Press Jump Logic
     if ((input.justPressedA || input.buttonA) && this.isGrounded) {
       this.playerVy = -420;
       this.isGrounded = false;
@@ -109,7 +108,6 @@ export class WaveRunnerCartridge implements BaseCartridge {
       this.isGrounded = true;
     }
 
-    // Spawn Obstacles with Fair Spacing
     this.spawnTimer += dt;
     if (this.spawnTimer > 2.4) {
       this.spawnTimer = 0;
@@ -144,8 +142,8 @@ export class WaveRunnerCartridge implements BaseCartridge {
   ): void {
     const scrollX = this.score * this.speed * 0.1;
 
-    // 1. Sky Background Gradient
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, height * 0.75);
+    // 1. Sky Background Gradient (Full Screen)
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, height * 0.85);
     skyGrad.addColorStop(0, '#38bdf8');
     skyGrad.addColorStop(1, '#e0f2fe');
     ctx.fillStyle = skyGrad;
@@ -157,7 +155,7 @@ export class WaveRunnerCartridge implements BaseCartridge {
     ctx.arc(width - 65, 45, 22, 0, TWO_PI);
     ctx.fill();
 
-    // 2. INFINITE SMOOTH SCROLLING CLOUDS (posMod fix)
+    // 2. Infinite Scrolling Clouds
     ctx.fillStyle = '#ffffff';
     ctx.globalAlpha = 0.85;
     const cloudSpan = width + 140;
@@ -174,7 +172,7 @@ export class WaveRunnerCartridge implements BaseCartridge {
     }
     ctx.globalAlpha = 1.0;
 
-    // 3. INFINITE SMOOTH SCROLLING L-SYSTEM TREES (posMod fix)
+    // 3. Infinite Scrolling L-System Trees
     const treeSpan = width + 180;
     for (let t = 0; t < 4; t++) {
       const rawTreeX = t * 180 - scrollX * 0.5;
@@ -208,8 +206,8 @@ export class WaveRunnerCartridge implements BaseCartridge {
       ctx.restore();
     }
 
-    // 4. Multi-Harmonic Terrain (Emerald Green)
-    const groundGrad = ctx.createLinearGradient(0, 180, 0, height);
+    // 4. Multi-Harmonic Ground Terrain (Lowered for full vertical headroom)
+    const groundGrad = ctx.createLinearGradient(0, 220, 0, height);
     groundGrad.addColorStop(0, '#22c55e');
     groundGrad.addColorStop(1, '#15803d');
 
@@ -264,7 +262,7 @@ export class WaveRunnerCartridge implements BaseCartridge {
     ctx.fillRect(this.playerX + 4, this.playerY - 5, 2.5, 2.5);
 
     // Score HUD
-    ProceduralFontEngine.renderText(ctx, `SCORE: ${Math.floor(this.score)}`, 20, 30, 14, '#0f172a', fontParams, time);
+    ProceduralFontEngine.renderText(ctx, `SCORE: ${Math.floor(this.score)}`, 20, 25, 14, '#0f172a', fontParams, time);
 
     if (this.gameOver) {
       ProceduralFontEngine.renderText(ctx, 'GAME OVER - PRESS A TO RESTART', width * 0.12, height * 0.5, 16, '#dc2626', fontParams, time);

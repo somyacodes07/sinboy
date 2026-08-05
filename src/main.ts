@@ -41,8 +41,12 @@ class SinBoyApp {
   private bootProgress: number = 0;
   private currentThemeKey: ThemeName = 'classicGray';
   private currentPalette: ThemePalette = THEMES['classicGray'];
-  private fontParams: FontParams = { ...DEFAULT_FONT_PARAMS };
+  private fontParams: FontParams = { ...DEFAULT_FONT_PARAMS, mode: 'bezier' };
   private wallpaperStyle: WallpaperStyle = 'domainWarp';
+
+  // Screen Shake Physics State
+  private shakeAmp = 0;
+  private shakeTime = 0;
 
   // Cartridges Library
   private cartridges: BaseCartridge[] = [];
@@ -89,7 +93,7 @@ class SinBoyApp {
   private currentFPS: number = 60;
   private fpsTimer: number = 0;
 
-  // Side Panel Bounds & Clickables
+  // Side Panel Bounds
   private themeButtonsBounds: { key: ThemeName; x: number; y: number; w: number; h: number }[] = [];
   private fontButtonsBounds: { mode: FontMode; x: number; y: number; w: number; h: number }[] = [];
   private devVarButtonsBounds: { eqName: string; varName: string; delta: number; x: number; y: number; w: number; h: number }[] = [];
@@ -274,6 +278,11 @@ class SinBoyApp {
     }
   }
 
+  public triggerScreenShake(amplitude: number = 8) {
+    this.shakeAmp = amplitude;
+    this.shakeTime = 0;
+  }
+
   private toggleThemeMenu() {
     this.showThemeMenu = !this.showThemeMenu;
     this.showFontMenu = false;
@@ -300,17 +309,7 @@ class SinBoyApp {
 
     if (this.showFontMenu) {
       if (this.inputState.justPressedA) {
-        const fontModes: FontMode[] = [
-          'bezier',
-          'fourier',
-          'wave',
-          'sdf',
-          'noise',
-          'skeleton',
-          'geometric',
-          'parametric',
-          'lissajous',
-        ];
+        const fontModes: FontMode[] = ['bezier', 'fourier', 'wave'];
         const idx = (fontModes.indexOf(this.fontParams.mode) + 1) % fontModes.length;
         this.fontParams.mode = fontModes[idx];
         soundEngine.playClick(440);
@@ -334,7 +333,7 @@ class SinBoyApp {
   }
 
   // -------------------------------------------------------------------------
-  // MASTER GAME LOOP
+  // MASTER GAME LOOP WITH SCREEN SHAKE & AUDIO ACCELERATION
   // -------------------------------------------------------------------------
 
   private gameLoop(timestamp: number) {
@@ -358,10 +357,24 @@ class SinBoyApp {
       this.fpsTimer = 0;
     }
 
+    // Dynamic Screen Shake Physics (Exponential Damped Oscillation)
+    let shakeX = 0;
+    let shakeY = 0;
+    if (this.shakeAmp > 0.1) {
+      this.shakeTime += dt;
+      const decay = Math.exp(-12 * this.shakeTime);
+      shakeX = Math.sin(35 * this.shakeTime) * this.shakeAmp * decay;
+      shakeY = Math.cos(28 * this.shakeTime) * this.shakeAmp * decay;
+      this.shakeAmp *= 0.92;
+    }
+
     const canvasW = window.innerWidth;
     const canvasH = window.innerHeight;
     this.ctx.fillStyle = '#0b0f19';
     this.ctx.fillRect(0, 0, canvasW, canvasH);
+
+    this.ctx.save();
+    this.ctx.translate(shakeX, shakeY);
 
     // 1. Console Shell Hardware
     this.consoleShell.updatePhysics(dt, this.inputState);
@@ -377,7 +390,9 @@ class SinBoyApp {
     // 2. Screen Display
     this.renderScreenContent(screenRect.x, screenRect.y, screenRect.width, screenRect.height, dt, timeInSec);
 
-    // 3. Modern Glassmorphic Studio Sidebar (Right Side)
+    this.ctx.restore();
+
+    // 3. Compact Clean Sidebar (Right Side)
     this.renderSideControlPanel(canvasW, canvasH, timeInSec);
 
     requestAnimationFrame(this.gameLoop.bind(this));
@@ -426,6 +441,11 @@ class SinBoyApp {
       activeCartridge.update(dt, this.inputState, soundEngine);
       activeCartridge.render(this.ctx, sw, sh, this.currentPalette, this.fontParams, time);
 
+      // Trigger screen shake on Game Over
+      if ((activeCartridge as any).gameOver && this.shakeAmp <= 0) {
+        this.triggerScreenShake(12);
+      }
+
       if (this.inputState.justPressedB || this.inputState.buttonSelect) {
         this.inMenu = true;
         soundEngine.stopBGM();
@@ -468,101 +488,87 @@ class SinBoyApp {
   }
 
   // -------------------------------------------------------------------------
-  // HIGH-END GLASSMORPHIC STUDIO SIDEBAR (RIGHT SIDE)
+  // CLEAN, COMPACT, MINIMAL SIDEBAR (NO WASTED FONTS)
   // -------------------------------------------------------------------------
 
   private renderSideControlPanel(canvasW: number, canvasH: number, time: number) {
-    if (canvasW < 820) return;
+    if (canvasW < 840) return;
 
-    const cardW = Math.min(320, canvasW * 0.25);
-    const cardX = canvasW - cardW - 22;
-    const cardY = 24;
-    const cardH = canvasH - 48;
+    const cardW = Math.min(250, canvasW * 0.22);
+    const cardX = canvasW - cardW - 20;
+    const cardY = 25;
+    const cardH = canvasH - 50;
 
     this.themeButtonsBounds = [];
     this.fontButtonsBounds = [];
     this.devVarButtonsBounds = [];
 
     this.ctx.save();
-    // Glassmorphic Gradient & Glow Border
-    const glassGrad = this.ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
-    glassGrad.addColorStop(0, 'rgba(15, 23, 42, 0.94)');
-    glassGrad.addColorStop(1, 'rgba(30, 41, 59, 0.90)');
-    this.ctx.fillStyle = glassGrad;
-    this.ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+    this.ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+    this.ctx.strokeStyle = '#334155';
     this.ctx.lineWidth = 1.5;
 
     this.ctx.beginPath();
-    this.ctx.roundRect(cardX, cardY, cardW, cardH, 18);
+    this.ctx.roundRect(cardX, cardY, cardW, cardH, 16);
     this.ctx.fill();
     this.ctx.stroke();
 
-    let curY = cardY + 24;
+    let curY = cardY + 22;
 
-    // Header Badge
-    this.ctx.fillStyle = 'rgba(14, 165, 233, 0.15)';
-    this.ctx.fillRect(cardX + 15, curY - 5, cardW - 30, 26);
+    // Header
     ProceduralFontEngine.renderText(
       this.ctx,
-      'STUDIO CONTROLS & DEV TUNER',
-      cardX + 22,
-      curY + 12,
-      10,
+      'STUDIO CONTROLS',
+      cardX + 15,
+      curY,
+      11,
       '#38bdf8',
       this.fontParams,
       time
     );
-    curY += 34;
+    curY += 28;
 
-    // 1. KEY LEGEND BADGES CARD
-    this.ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
-    this.ctx.fillRect(cardX + 15, curY, cardW - 30, 110);
-    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-    this.ctx.strokeRect(cardX + 15, curY, cardW - 30, 110);
+    // 1. KEY LEGEND
+    this.ctx.fillStyle = '#1e293b';
+    this.ctx.fillRect(cardX + 12, curY, cardW - 24, 88);
 
-    const keyMappings = [
-      { key: '[WASD / ARROWS]', label: 'DPAD MOVE' },
-      { key: '[SPACE / Z / ENTER]', label: 'BUTTON A (ACTION)' },
-      { key: '[X / SHIFT]', label: 'BUTTON B (BACK)' },
-      { key: '[TAB] DEV  [M] MATH', label: 'INSPECT / TUTORIAL' },
-      { key: '[T] THEME [F] FONT', label: 'STYLE TOGGLES' },
+    const keysMap = [
+      { k: 'WASD / ARROWS', v: 'MOVE' },
+      { k: 'Z / SPACE', v: 'ACTION' },
+      { k: 'X / SHIFT', v: 'BACK' },
+      { k: 'TAB / M', v: 'DEV / MATH' },
+      { k: 'T / F', v: 'THEME / FONT' },
     ];
 
-    keyMappings.forEach((km, idx) => {
-      const ky = curY + 18 + idx * 19;
-      ProceduralFontEngine.renderText(this.ctx, km.key, cardX + 22, ky, 8, '#f8fafc', this.fontParams, time);
-      ProceduralFontEngine.renderText(this.ctx, km.label, cardX + 150, ky, 8, '#94a3b8', this.fontParams, time);
+    keysMap.forEach((km, idx) => {
+      const ky = curY + 16 + idx * 16;
+      ProceduralFontEngine.renderText(this.ctx, km.k, cardX + 18, ky, 8, '#f8fafc', this.fontParams, time);
+      ProceduralFontEngine.renderText(this.ctx, km.v, cardX + 140, ky, 8, '#94a3b8', this.fontParams, time);
     });
 
-    curY += 124;
+    curY += 102;
 
-    // 2. THEME SELECTOR CARDS
-    ProceduralFontEngine.renderText(this.ctx, 'THEME SELECTOR:', cardX + 15, curY, 10, '#f8fafc', this.fontParams, time);
-    curY += 15;
+    // 2. THEME SELECTOR
+    ProceduralFontEngine.renderText(this.ctx, 'THEME SELECTOR:', cardX + 15, curY, 9.5, '#f8fafc', this.fontParams, time);
+    curY += 14;
 
     const themeKeys: ThemeName[] = ['classicGray', 'paperMath', 'holographic', 'pastelWave', 'cyberpunk', 'synthwave'];
-    const btnW = (cardW - 40) / 2;
-    const btnH = 24;
+    const btnW = (cardW - 32) / 2;
+    const btnH = 22;
 
     themeKeys.forEach((key, idx) => {
-      const bx = cardX + 15 + (idx % 2) * (btnW + 10);
-      const by = curY + Math.floor(idx / 2) * (btnH + 6);
+      const bx = cardX + 12 + (idx % 2) * (btnW + 8);
+      const by = curY + Math.floor(idx / 2) * (btnH + 5);
       const isSelected = key === this.currentThemeKey;
 
-      this.ctx.fillStyle = isSelected ? '#2563eb' : 'rgba(30, 41, 59, 0.8)';
+      this.ctx.fillStyle = isSelected ? '#2563eb' : '#1e293b';
       this.ctx.fillRect(bx, by, btnW, btnH);
-
-      if (isSelected) {
-        this.ctx.strokeStyle = '#60a5fa';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(bx, by, btnW, btnH);
-      }
 
       ProceduralFontEngine.renderText(
         this.ctx,
-        THEMES[key].name.toUpperCase(),
-        bx + 5,
-        by + 15,
+        THEMES[key].name.substring(0, 10).toUpperCase(),
+        bx + 4,
+        by + 14,
         7.5,
         isSelected ? '#ffffff' : '#cbd5e1',
         this.fontParams,
@@ -572,46 +578,40 @@ class SinBoyApp {
       this.themeButtonsBounds.push({ key, x: bx, y: by, w: btnW, h: btnH });
     });
 
-    curY += Math.ceil(themeKeys.length / 2) * (btnH + 6) + 16;
+    curY += Math.ceil(themeKeys.length / 2) * (btnH + 5) + 14;
 
-    // 3. FONT ENGINE CHIPS
-    ProceduralFontEngine.renderText(this.ctx, 'PROCEDURAL FONT ENGINE:', cardX + 15, curY, 10, '#f8fafc', this.fontParams, time);
-    curY += 15;
+    // 3. CLEAN PROCEDURAL FONTS (ONLY 3 CRISP MATH FONTS: BEZIER, FOURIER, WAVE)
+    ProceduralFontEngine.renderText(this.ctx, 'CLEAN MATH FONTS:', cardX + 15, curY, 9.5, '#f8fafc', this.fontParams, time);
+    curY += 14;
 
-    const fontModes: FontMode[] = ['bezier', 'fourier', 'wave', 'sdf', 'noise', 'lissajous'];
+    const fontModes: FontMode[] = ['bezier', 'fourier', 'wave'];
     fontModes.forEach((mode, idx) => {
-      const bx = cardX + 15 + (idx % 2) * (btnW + 10);
-      const by = curY + Math.floor(idx / 2) * (btnH + 6);
+      const bx = cardX + 12 + idx * (btnW * 0.68 + 4);
+      const by = curY;
       const isSelected = mode === this.fontParams.mode;
 
-      this.ctx.fillStyle = isSelected ? '#059669' : 'rgba(30, 41, 59, 0.8)';
-      this.ctx.fillRect(bx, by, btnW, btnH);
-
-      if (isSelected) {
-        this.ctx.strokeStyle = '#34d399';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(bx, by, btnW, btnH);
-      }
+      this.ctx.fillStyle = isSelected ? '#10b981' : '#1e293b';
+      this.ctx.fillRect(bx, by, btnW * 0.68, btnH);
 
       ProceduralFontEngine.renderText(
         this.ctx,
         mode.toUpperCase(),
-        bx + 6,
-        by + 15,
+        bx + 4,
+        by + 14,
         7.5,
         isSelected ? '#ffffff' : '#cbd5e1',
         this.fontParams,
         time
       );
 
-      this.fontButtonsBounds.push({ mode, x: bx, y: by, w: btnW, h: btnH });
+      this.fontButtonsBounds.push({ mode, x: bx, y: by, w: btnW * 0.68, h: btnH });
     });
 
-    curY += Math.ceil(fontModes.length / 2) * (btnH + 6) + 16;
+    curY += btnH + 16;
 
     // 4. DEV MATH TUNER (TAB KEY)
-    ProceduralFontEngine.renderText(this.ctx, 'DEV MATH TUNER (TAB KEY):', cardX + 15, curY, 10, '#f8fafc', this.fontParams, time);
-    curY += 15;
+    ProceduralFontEngine.renderText(this.ctx, 'DEV MATH TUNER (TAB KEY):', cardX + 15, curY, 9.5, '#f8fafc', this.fontParams, time);
+    curY += 14;
 
     const activeCart = this.cartridges[this.activeCartridgeIdx];
     const eqs = activeCart.getEquations();
@@ -619,39 +619,33 @@ class SinBoyApp {
     if (eqs.length > 0) {
       const eq = eqs[0];
       Object.entries(eq.variables).forEach(([vName, vVal]) => {
-        this.ctx.fillStyle = 'rgba(30, 41, 59, 0.8)';
-        this.ctx.fillRect(cardX + 15, curY, cardW - 30, 28);
+        this.ctx.fillStyle = '#1e293b';
+        this.ctx.fillRect(cardX + 12, curY, cardW - 24, 25);
 
         ProceduralFontEngine.renderText(
           this.ctx,
           `${vName} = ${typeof vVal === 'number' ? vVal.toFixed(2) : vVal}`,
-          cardX + 22,
-          curY + 17,
-          9,
+          cardX + 18,
+          curY + 16,
+          8.5,
           '#f8fafc',
           this.fontParams,
           time
         );
 
-        // Circular [-] button
-        const minusX = cardX + cardW - 65;
+        const minusX = cardX + cardW - 55;
         this.ctx.fillStyle = '#ef4444';
-        this.ctx.beginPath();
-        this.ctx.arc(minusX + 10, curY + 14, 10, 0, Math.PI * 2);
-        this.ctx.fill();
-        ProceduralFontEngine.renderText(this.ctx, '-', minusX + 7, curY + 18, 10, '#ffffff', this.fontParams, time);
-        this.devVarButtonsBounds.push({ eqName: eq.name, varName: vName, delta: -2, x: minusX, y: curY + 4, w: 20, h: 20 });
+        this.ctx.fillRect(minusX, curY + 3, 18, 18);
+        ProceduralFontEngine.renderText(this.ctx, '-', minusX + 6, curY + 15, 10, '#ffffff', this.fontParams, time);
+        this.devVarButtonsBounds.push({ eqName: eq.name, varName: vName, delta: -2, x: minusX, y: curY + 3, w: 18, h: 18 });
 
-        // Circular [+] button
-        const plusX = cardX + cardW - 40;
+        const plusX = cardX + cardW - 32;
         this.ctx.fillStyle = '#10b981';
-        this.ctx.beginPath();
-        this.ctx.arc(plusX + 10, curY + 14, 10, 0, Math.PI * 2);
-        this.ctx.fill();
-        ProceduralFontEngine.renderText(this.ctx, '+', plusX + 6, curY + 18, 10, '#ffffff', this.fontParams, time);
-        this.devVarButtonsBounds.push({ eqName: eq.name, varName: vName, delta: 2, x: plusX, y: curY + 4, w: 20, h: 20 });
+        this.ctx.fillRect(plusX, curY + 3, 18, 18);
+        ProceduralFontEngine.renderText(this.ctx, '+', plusX + 5, curY + 15, 10, '#ffffff', this.fontParams, time);
+        this.devVarButtonsBounds.push({ eqName: eq.name, varName: vName, delta: 2, x: plusX, y: curY + 3, w: 18, h: 18 });
 
-        curY += 32;
+        curY += 28;
       });
     }
 
@@ -705,6 +699,28 @@ class SinBoyApp {
       this.fontParams,
       time
     );
+
+    // LIVE OSCILLOSCOPE SYNTHESIZER WAVEFORM MONITOR IN DEV MODE (TAB)
+    if (this.inspector.isInspectorActive()) {
+      const waveform = soundEngine.getWaveformData();
+      this.ctx.strokeStyle = '#38bdf8';
+      this.ctx.lineWidth = 1.5;
+      this.ctx.beginPath();
+
+      const startX = width * 0.45;
+      const waveW = 120;
+      const midY = 14;
+
+      for (let i = 0; i < waveform.length; i += 4) {
+        const v = (waveform[i] - 128) / 128.0;
+        const x = startX + (i / waveform.length) * waveW;
+        const y = midY + v * 10;
+
+        if (i === 0) this.ctx.moveTo(x, y);
+        else this.ctx.lineTo(x, y);
+      }
+      this.ctx.stroke();
+    }
   }
 
   private renderCartridgeMenu(width: number, height: number, time: number) {
