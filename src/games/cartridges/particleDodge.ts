@@ -92,7 +92,7 @@ export class ParticleDodgeCartridge implements BaseCartridge {
     if (input.justPressedA && this.empCharges > 0 && this.empRadius <= 0) {
       this.empCharges--;
       this.empRadius = 1;
-      soundEngine.playExplosion();
+      soundEngine.playEmp();
     }
 
     // Expand EMP Shockwave

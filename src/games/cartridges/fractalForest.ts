@@ -18,7 +18,7 @@ export class FractalForestCartridge implements BaseCartridge {
   angleStep = PI / 6;
   branchScale = 0.72;
   maxDepth = 7;
-  seasonIdx = 0; // 0: Spring, 1: Autumn, 2: Sakura Pink, 3: Cyber Neon
+  seasonIdx = 0;
 
   seasons = [
     { name: 'SPRING', primary: '#22c55e', tip1: '#4ade80', tip2: '#16a34a', bg1: '#e0f2fe', bg2: '#f1f5f9' },
@@ -56,10 +56,10 @@ export class FractalForestCartridge implements BaseCartridge {
   }
 
   update(dt: number, input: HardwareInputState, soundEngine: any): void {
-    // Single-press Switch Season (Button A)
+    // Single-press Switch Season (Button A) with harmonic season chime!
     if (input.justPressedA) {
       this.seasonIdx = (this.seasonIdx + 1) % this.seasons.length;
-      soundEngine.playClick(650);
+      soundEngine.playSeasonChime();
     }
 
     if (input.dpadLeft) this.angleStep -= 0.5 * dt;
@@ -78,7 +78,6 @@ export class FractalForestCartridge implements BaseCartridge {
   ): void {
     const s = this.seasons[this.seasonIdx];
 
-    // Background Gradient according to active Season
     const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
     bgGrad.addColorStop(0, s.bg1);
     bgGrad.addColorStop(1, s.bg2);
@@ -133,7 +132,7 @@ export class FractalForestCartridge implements BaseCartridge {
     const y2 = y + Math.sin(animatedAngle) * len;
 
     if (depth <= 2) {
-      ctx.strokeStyle = '#78350f'; // Timber brown trunk
+      ctx.strokeStyle = '#78350f';
       ctx.lineWidth = Math.max(2, (this.maxDepth - depth) * 1.5);
     } else {
       ctx.strokeStyle = s.primary;
@@ -145,7 +144,6 @@ export class FractalForestCartridge implements BaseCartridge {
     ctx.lineTo(x2, y2);
     ctx.stroke();
 
-    // Seasonal Foliage / Blossom Nodes
     if (depth >= 4) {
       ctx.fillStyle = depth % 2 === 0 ? s.tip1 : s.tip2;
       ctx.beginPath();

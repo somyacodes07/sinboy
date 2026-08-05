@@ -151,7 +151,7 @@ export class LissajousArenaCartridge implements BaseCartridge {
       if (distBoss < 46) {
         this.bossHp = Math.max(0, this.bossHp - 2.5);
         this.bullets.splice(i, 1);
-        soundEngine.playClick(900);
+        soundEngine.playBossHit();
 
         // Sparks
         for (let p = 0; p < 3; p++) {

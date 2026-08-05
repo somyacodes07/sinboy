@@ -1,6 +1,6 @@
 /**
  * Cartridge 6: Ripple Sim
- * "Interactive 2D fluid wave equation simulation in deep ocean blue with automatic raindrop generator."
+ * "Interactive 2D fluid wave equation simulation in deep ocean blue with procedural raindrop splash SFX."
  */
 
 import { BaseCartridge, EquationInfo } from '../gameEngine';
@@ -60,25 +60,29 @@ export class RippleSimCartridge implements BaseCartridge {
     if (input.dpadUp && this.cursorY > 1) this.cursorY--;
     if (input.dpadDown && this.cursorY < this.rows - 2) this.cursorY++;
 
-    // Single-press Manual Drop (Button A)
+    // Single-press Heavy Water Splash (Button A)
     if (input.justPressedA) {
       this.buffer1[this.cursorX][this.cursorY] = 255;
-      soundEngine.playClick(300);
+      soundEngine.playWaterSplash();
     }
 
     // Toggle Rain Generator (Button Select)
     if (input.buttonSelect) {
       this.rainMode = !this.rainMode;
+      soundEngine.playClick(500);
     }
 
-    // Automatic Rain Drops
+    // Automatic Rain Drops with Procedural Water Droplet Splash SFX
     if (this.rainMode) {
       this.rainTimer += dt;
-      if (this.rainTimer > 0.15) {
+      if (this.rainTimer > 0.16) {
         this.rainTimer = 0;
         const rx = Math.floor(Math.random() * (this.cols - 4)) + 2;
         const ry = Math.floor(Math.random() * (this.rows - 4)) + 2;
         this.buffer1[rx][ry] = 180 + Math.random() * 75;
+
+        // Play procedural raindrop droplet sound!
+        soundEngine.playRaindrop();
       }
     }
 
@@ -136,7 +140,7 @@ export class RippleSimCartridge implements BaseCartridge {
 
     ProceduralFontEngine.renderText(
       ctx,
-      `RAIN GENERATOR: ${this.rainMode ? 'ON' : 'OFF'} (PRESS A: DROP RIPPLE)`,
+      `RAIN GENERATOR: ${this.rainMode ? 'ON' : 'OFF'} (PRESS A: HEAVY SPLASH)`,
       15,
       25,
       11,
