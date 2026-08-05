@@ -3,7 +3,7 @@
  * "I built a procedural mathematics operating system where games, UI, typography, audio, graphics, and even the console hardware are generated from equations."
  */
 
-import { ConsoleShellEngine, HardwareInputState } from './graphics/consoleShell';
+import { ConsoleShellEngine, HardwareInputState, ControlHitbox } from './graphics/consoleShell';
 import { THEMES, ThemeName, ThemePalette } from './graphics/themes';
 import { PostFXEngine } from './graphics/postFX';
 import { WallpaperEngine, WallpaperStyle } from './graphics/wallpapers';
@@ -92,6 +92,8 @@ class SinBoyApp {
     justPressedLeft: false,
     justPressedRight: false,
   };
+
+  private touchInputState: Record<string, boolean> = {};
 
   private prevInputState = {
     buttonA: false,
@@ -194,8 +196,13 @@ class SinBoyApp {
       this.updateKeyboardState(e.code, false);
     });
 
+    // Mobile & Desktop Touch/Click Input Handlers
     this.canvas.addEventListener('pointerdown', (e) => this.handlePointerInput(e, true));
+    this.canvas.addEventListener('pointermove', (e) => {
+      if (e.buttons > 0) this.handlePointerInput(e, true);
+    });
     this.canvas.addEventListener('pointerup', (e) => this.handlePointerInput(e, false));
+    this.canvas.addEventListener('pointercancel', (e) => this.handlePointerInput(e, false));
   }
 
   private updateKeyboardState(code: string, isPressed: boolean) {
@@ -241,6 +248,79 @@ class SinBoyApp {
     }
   }
 
+  private handlePointerInput(e: PointerEvent, isPressed: boolean) {
+    const rect = this.canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    if (isPressed) {
+      // Check Side Panel Buttons
+      for (const btn of this.themeButtonsBounds) {
+        if (clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h) {
+          this.currentThemeKey = btn.key;
+          this.currentPalette = THEMES[btn.key];
+          soundEngine.playClick(600);
+          return;
+        }
+      }
+
+      for (const btn of this.fontButtonsBounds) {
+        if (clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h) {
+          this.fontParams.mode = btn.mode;
+          soundEngine.playClick(650);
+          return;
+        }
+      }
+
+      for (const btn of this.devVarButtonsBounds) {
+        if (clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h) {
+          const cart = this.cartridges[this.activeCartridgeIdx];
+          cart.setVariable(btn.eqName, btn.varName, (cart.getEquations()[0]?.variables[btn.varName] || 0) + btn.delta);
+          soundEngine.playClick(800);
+          return;
+        }
+      }
+    }
+
+    // Physical GameBoy Control Hitbox Check
+    const hitboxes = this.consoleShell.getControlHitboxes();
+    let hitAny = false;
+
+    hitboxes.forEach((hb) => {
+      let isHit = false;
+      if (hb.r) {
+        const dist = Math.sqrt((clickX - hb.x) ** 2 + (clickY - hb.y) ** 2);
+        if (dist <= hb.r) isHit = true;
+      } else if (hb.w && hb.h) {
+        if (clickX >= hb.x && clickX <= hb.x + hb.w && clickY >= hb.y && clickY <= hb.y + hb.h) isHit = true;
+      }
+
+      if (isHit && isPressed) {
+        hitAny = true;
+        this.touchInputState[hb.id] = true;
+      } else if (!isPressed) {
+        this.touchInputState[hb.id] = false;
+      }
+    });
+
+    // Merge Touch & Keyboard Inputs
+    this.inputState.dpadLeft = !!this.touchInputState['dpadLeft'] || this.inputState.dpadLeft;
+    this.inputState.dpadRight = !!this.touchInputState['dpadRight'] || this.inputState.dpadRight;
+    this.inputState.dpadUp = !!this.touchInputState['dpadUp'] || this.inputState.dpadUp;
+    this.inputState.dpadDown = !!this.touchInputState['dpadDown'] || this.inputState.dpadDown;
+
+    this.inputState.buttonA = !!this.touchInputState['btnA'] || this.inputState.buttonA;
+    this.inputState.buttonB = !!this.touchInputState['btnB'] || this.inputState.buttonB;
+    this.inputState.buttonX = !!this.touchInputState['btnX'] || this.inputState.buttonX;
+    this.inputState.buttonY = !!this.touchInputState['btnY'] || this.inputState.buttonY;
+    this.inputState.buttonSelect = !!this.touchInputState['btnSelect'] || this.inputState.buttonSelect;
+    this.inputState.buttonStart = !!this.touchInputState['btnStart'] || this.inputState.buttonStart;
+
+    if (isPressed && this.inMenu && !hitAny) {
+      this.handleMenuInput();
+    }
+  }
+
   private updateInputTriggers() {
     this.inputState.justPressedA = this.inputState.buttonA && !this.prevInputState.buttonA;
     this.inputState.justPressedB = this.inputState.buttonB && !this.prevInputState.buttonB;
@@ -255,44 +335,6 @@ class SinBoyApp {
     this.prevInputState.dpadDown = this.inputState.dpadDown;
     this.prevInputState.dpadLeft = this.inputState.dpadLeft;
     this.prevInputState.dpadRight = this.inputState.dpadRight;
-  }
-
-  private handlePointerInput(e: PointerEvent, isPressed: boolean) {
-    if (!isPressed) return;
-
-    const rect = this.canvas.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-
-    for (const btn of this.themeButtonsBounds) {
-      if (clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h) {
-        this.currentThemeKey = btn.key;
-        this.currentPalette = THEMES[btn.key];
-        soundEngine.playClick(600);
-        return;
-      }
-    }
-
-    for (const btn of this.fontButtonsBounds) {
-      if (clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h) {
-        this.fontParams.mode = btn.mode;
-        soundEngine.playClick(650);
-        return;
-      }
-    }
-
-    for (const btn of this.devVarButtonsBounds) {
-      if (clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h) {
-        const cart = this.cartridges[this.activeCartridgeIdx];
-        cart.setVariable(btn.eqName, btn.varName, (cart.getEquations()[0]?.variables[btn.varName] || 0) + btn.delta);
-        soundEngine.playClick(800);
-        return;
-      }
-    }
-
-    if (this.inMenu) {
-      this.handleMenuInput();
-    }
   }
 
   public triggerScreenShake(amplitude: number = 8) {

@@ -29,6 +29,15 @@ Nothing is loaded. Nothing is drawn from static assets. Reality is evaluated eve
 
 ---
 
+## 📱 Mobile Touch & Clickable Handheld Hardware Controls
+
+Every single physical control rendered on the GameBoy console is **100% clickable and touchable on mobile devices and desktop**:
+- **D-Pad (Up, Down, Left, Right)**: Precise screen hitboxes for continuous holding and directional steering.
+- **Action Buttons (A, B, X, Y)**: Tactile spring physics and touch event triggers.
+- **Select & Start Pills**: Interactive pill buttons for modal toggling and game launching.
+
+---
+
 ## 💻 SinBoy OS Architecture
 
 Booting SinBoy OS presents a complete procedural operating system:
@@ -88,6 +97,11 @@ Click **`EDIT`** on any element to tune parameters and watch the console hardwar
 7. **Chaos Laboratory**: Interactive 3D camera rotation using D-Pad across Lorenz Attractor & Logistic Map bifurcation.
 8. **Fourier Epicycle Painter**: Reconstruct multi-shape vector artwork (Star, Heart, Butterfly) via rotating Fourier series epicycles.
 9. **Lissajous Arena**: Multi-phase boss battle with dynamic Lissajous kinematics ($x=\sin(1.8t), y=\sin(2.7t)$), polar rose forcefields, targeted plasma projectiles, 8-way radial shockwaves, boss hit spark SFX (`playBossHit()`), and player combat.
+
+### 5. 🛠️ Developer Mode & Education Mode
+- **Developer Mode (`TAB` key)**: Transforms console & side panel into live equation editor. Click `[-]` / `[+]` or press Arrow Keys to tune variables ($A$, $f$, $v$, $\text{epicycles}$) in real-time.
+- **Math Education Overlay (`M` key)**: Displays interactive mathematical lessons and function plots for every active game.
+- **11 Procedural Themes (`T` key)**: Classic GameBoy Gray, Graph Paper, Holographic Spectrum, Pastel Aurora, Cyberpunk 2099, 80s Synthwave, Neon Vector, Aurora, Deep Galaxy, Magma Core, Oscilloscope.
 
 ---
 

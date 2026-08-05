@@ -27,6 +27,15 @@ export interface HardwareInputState {
   justPressedRight?: boolean;
 }
 
+export interface ControlHitbox {
+  id: 'dpadLeft' | 'dpadRight' | 'dpadUp' | 'dpadDown' | 'btnA' | 'btnB' | 'btnX' | 'btnY' | 'btnSelect' | 'btnStart';
+  x: number;
+  y: number;
+  r?: number;
+  w?: number;
+  h?: number;
+}
+
 export class ConsoleShellEngine {
   private springs = {
     dpadLeft: new SpringVal(0, 300, 20),
@@ -40,6 +49,12 @@ export class ConsoleShellEngine {
     btnSelect: new SpringVal(0, 300, 20),
     btnStart: new SpringVal(0, 300, 20),
   };
+
+  private hitboxes: ControlHitbox[] = [];
+
+  public getControlHitboxes(): ControlHitbox[] {
+    return this.hitboxes;
+  }
 
   updatePhysics(dt: number, input: HardwareInputState) {
     this.springs.dpadLeft.target = input.dpadLeft ? 1 : 0;
@@ -67,6 +82,7 @@ export class ConsoleShellEngine {
     fontParams: FontParams = DEFAULT_FONT_PARAMS
   ): { x: number; y: number; width: number; height: number } {
     ctx.save();
+    this.hitboxes = [];
 
     const aspect = 0.64;
     let consoleH = Math.min(canvasHeight * 0.96, 950);
@@ -159,7 +175,7 @@ export class ConsoleShellEngine {
     ctx.fill();
     ctx.restore();
 
-    // 4. LARGE EXPANDED PLAYING SCREEN BEZEL (54% height ratio!)
+    // 4. LARGE EXPANDED PLAYING SCREEN BEZEL
     const screenFrameX = cx + consoleW * 0.05;
     const screenFrameY = cy + consoleH * 0.095;
     const screenFrameW = consoleW * 0.90;
@@ -206,8 +222,8 @@ export class ConsoleShellEngine {
     const selectX = cx + consoleW * 0.42;
     const startX = cx + consoleW * 0.58;
     const pillY = cy + consoleH * 0.935;
-    this.renderPillButton(ctx, selectX, pillY, consoleW * 0.09, consoleW * 0.03, 'SELECT', this.springs.btnSelect.val, palette, fontParams, time);
-    this.renderPillButton(ctx, startX, pillY, consoleW * 0.09, consoleW * 0.03, 'START', this.springs.btnStart.val, palette, fontParams, time);
+    this.renderPillButton(ctx, selectX, pillY, consoleW * 0.09, consoleW * 0.03, 'SELECT', 'btnSelect', this.springs.btnSelect.val, palette, fontParams, time);
+    this.renderPillButton(ctx, startX, pillY, consoleW * 0.09, consoleW * 0.03, 'START', 'btnStart', this.springs.btnStart.val, palette, fontParams, time);
 
     // 6. SPEAKER GRILLES
     const speakerX = cx + consoleW * 0.83;
@@ -222,6 +238,12 @@ export class ConsoleShellEngine {
   private renderDPad(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, palette: ThemePalette) {
     const armW = size * 0.32;
     const armL = size * 0.5;
+
+    // Register Hitboxes for D-Pad
+    this.hitboxes.push({ id: 'dpadUp', x: cx - armW * 0.5, y: cy - armL, w: armW, h: armL });
+    this.hitboxes.push({ id: 'dpadDown', x: cx - armW * 0.5, y: cy, w: armW, h: armL });
+    this.hitboxes.push({ id: 'dpadLeft', x: cx - armL, y: cy - armW * 0.5, w: armL, h: armW });
+    this.hitboxes.push({ id: 'dpadRight', x: cx, y: cy - armW * 0.5, w: armL, h: armW });
 
     ctx.save();
     ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
@@ -284,16 +306,19 @@ export class ConsoleShellEngine {
     time: number
   ) {
     const btnRadius = radius * 0.38;
-    const offsets = [
-      { name: 'Y', dx: -radius * 0.6, dy: 0, spring: this.springs.btnY.val, color: '#ec4899' },
-      { name: 'X', dx: 0, dy: -radius * 0.6, spring: this.springs.btnX.val, color: '#3b82f6' },
-      { name: 'B', dx: 0, dy: radius * 0.6, spring: this.springs.btnB.val, color: '#ef4444' },
-      { name: 'A', dx: radius * 0.6, dy: 0, spring: this.springs.btnA.val, color: '#10b981' },
+    const offsets: { name: string; id: 'btnY' | 'btnX' | 'btnB' | 'btnA'; dx: number; dy: number; spring: number; color: string }[] = [
+      { name: 'Y', id: 'btnY', dx: -radius * 0.6, dy: 0, spring: this.springs.btnY.val, color: '#ec4899' },
+      { name: 'X', id: 'btnX', dx: 0, dy: -radius * 0.6, spring: this.springs.btnX.val, color: '#3b82f6' },
+      { name: 'B', id: 'btnB', dx: 0, dy: radius * 0.6, spring: this.springs.btnB.val, color: '#ef4444' },
+      { name: 'A', id: 'btnA', dx: radius * 0.6, dy: 0, spring: this.springs.btnA.val, color: '#10b981' },
     ];
 
     offsets.forEach((btn) => {
       const bx = cx + btn.dx;
       const by = cy + btn.dy + btn.spring * 3.0;
+
+      // Register Hitboxes for Buttons A, B, X, Y
+      this.hitboxes.push({ id: btn.id, x: bx, y: by, r: btnRadius + 6 });
 
       ctx.save();
       ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
@@ -335,12 +360,16 @@ export class ConsoleShellEngine {
     w: number,
     h: number,
     label: string,
+    id: 'btnSelect' | 'btnStart',
     springVal: number,
     palette: ThemePalette,
     fontParams: FontParams,
     time: number
   ) {
     const py = cy + springVal * 2.0;
+
+    // Register Hitboxes for Select & Start
+    this.hitboxes.push({ id, x: cx - w * 0.5, y: py - h * 0.5, w, h });
 
     ctx.save();
     ctx.fillStyle = springVal > 0.5 ? palette.buttonActive : '#475569';
