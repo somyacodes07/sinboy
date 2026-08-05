@@ -32,9 +32,10 @@ Nothing is loaded. Nothing is drawn from static assets. Reality is evaluated eve
 ## 🎨 Visual Language & Hardware Design
 
 Imagine if an authentic GameBoy had been invented by modern creative technologists and mathematicians:
+- **Enlarged Widescreen Viewport**: Widescreen playing screen ratio ($54\%$ console height ratio $\times 90\%$ console width ratio) making the gameplay display large, bold, and crystal clear!
 - **Classic GameBoy Slate Gray Casing**: Authentic retro industrial slate gray superellipse body shell (`#c4cad4` to `#a0a8b6`).
 - **Dark Slate Screen Bezel**: High-contrast dark charcoal screen frame (`#2c323f` to `#1e232e`) that makes full-color screen graphics pop.
-- **Interactive Side Controls & Dev Studio Panel**: Compact desktop side panel on the right with key legends (`[WASD / ARROWS]`, `[Z / SPACE]`, `[X]`, `[TAB]`, `[M]`, `[T]`, `[F]`), clickable theme buttons, font mode selectors, and live math parameter sliders (`[-]` / `[+]`).
+- **Glassmorphic Studio Sidebar**: Desktop sidebar on the right with key legends (`[WASD / ARROWS]`, `[Z / SPACE]`, `[X]`, `[TAB]`, `[M]`, `[T]`, `[F]`), 3D theme cards with glowing active borders, font mode chips, and live math parameter sliders with circular `[-]` / `[+]` buttons.
 - **Full-Color Natural Environments**: Cerulean sky blue gradients, golden suns, white Perlin clouds, timber brown tree trunks (`#78350f`), emerald green foliage (`#22c55e`), and vibrant player avatars.
 
 ---

@@ -1,6 +1,6 @@
 /**
  * SinBoy Procedural Console Shell Hardware Engine
- * "Authentic retro GameBoy slate gray casing with dark slate screen bezel & 3D tactile controls."
+ * "Authentic retro GameBoy slate gray casing with enlarged widescreen bezel & 3D tactile controls."
  */
 
 import { SDFEngine, SpringVal, NoiseEngine, TWO_PI, PI } from '../math/mathCore';
@@ -19,7 +19,6 @@ export interface HardwareInputState {
   buttonSelect: boolean;
   buttonStart: boolean;
 
-  // Single-press leading-edge triggers (true ONLY on initial press frame)
   justPressedA?: boolean;
   justPressedB?: boolean;
   justPressedUp?: boolean;
@@ -59,9 +58,6 @@ export class ConsoleShellEngine {
     Object.values(this.springs).forEach((s) => s.update(dt));
   }
 
-  /**
-   * Renders the complete procedural SinBoy handheld hardware console.
-   */
   renderConsole(
     ctx: CanvasRenderingContext2D,
     canvasWidth: number,
@@ -72,7 +68,7 @@ export class ConsoleShellEngine {
   ): { x: number; y: number; width: number; height: number } {
     ctx.save();
 
-    const aspect = 0.62;
+    const aspect = 0.64;
     let consoleH = Math.min(canvasHeight * 0.96, 950);
     let consoleW = consoleH * aspect;
 
@@ -84,7 +80,7 @@ export class ConsoleShellEngine {
     const cx = (canvasWidth - consoleW) * 0.5;
     const cy = (canvasHeight - consoleH) * 0.5;
 
-    // 1. CONSOLE BODY OUTER SHELL (Superellipse Shape & Slate Gray Gradient)
+    // 1. CONSOLE BODY OUTER SHELL (Slate Gray Superellipse)
     ctx.save();
     ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
     ctx.shadowBlur = 45;
@@ -97,7 +93,6 @@ export class ConsoleShellEngine {
     const w = consoleW;
     const h = consoleH;
 
-    // Authentic GameBoy Slate Gray Gradient
     const shellGrad = ctx.createLinearGradient(x, y, x + w, y + h);
     shellGrad.addColorStop(0, palette.shellPrimary);
     shellGrad.addColorStop(1, palette.shellSecondary);
@@ -116,7 +111,6 @@ export class ConsoleShellEngine {
     ctx.closePath();
     ctx.fill();
 
-    // Metallic Edge Highlight
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -139,21 +133,21 @@ export class ConsoleShellEngine {
     ctx.restore();
 
     // 3. CONSOLE BRANDING LOGO ("SINBOY")
-    const logoY = cy + consoleH * 0.055;
+    const logoY = cy + consoleH * 0.042;
     ProceduralFontEngine.renderText(
       ctx,
       'SINBOY',
-      cx + consoleW * 0.35,
+      cx + consoleW * 0.36,
       logoY,
-      consoleW * 0.058,
+      consoleW * 0.052,
       palette.shellAccent,
       { ...fontParams, mode: 'bezier', weight: 4.5 },
       time
     );
 
-    // Power LED indicator
-    const ledX = cx + consoleW * 0.12;
-    const ledY = logoY + consoleW * 0.02;
+    // Power LED
+    const ledX = cx + consoleW * 0.10;
+    const ledY = logoY + consoleW * 0.015;
     const ledGlow = 0.5 + 0.5 * Math.sin(time * 3.0);
 
     ctx.save();
@@ -165,14 +159,13 @@ export class ConsoleShellEngine {
     ctx.fill();
     ctx.restore();
 
-    // 4. RETRO DARK SLATE SCREEN BEZEL
-    const screenFrameX = cx + consoleW * 0.08;
-    const screenFrameY = cy + consoleH * 0.12;
-    const screenFrameW = consoleW * 0.84;
-    const screenFrameH = consoleH * 0.44;
+    // 4. LARGE EXPANDED PLAYING SCREEN BEZEL (54% height ratio!)
+    const screenFrameX = cx + consoleW * 0.05;
+    const screenFrameY = cy + consoleH * 0.095;
+    const screenFrameW = consoleW * 0.90;
+    const screenFrameH = consoleH * 0.54;
 
     ctx.save();
-    // Dark Charcoal Slate Screen Bezel
     const bezelGrad = ctx.createLinearGradient(screenFrameX, screenFrameY, screenFrameX, screenFrameY + screenFrameH);
     bezelGrad.addColorStop(0, '#2c323f');
     bezelGrad.addColorStop(1, '#1e232e');
@@ -182,7 +175,6 @@ export class ConsoleShellEngine {
     ctx.roundRect(screenFrameX, screenFrameY, screenFrameW, screenFrameH, 14);
     ctx.fill();
 
-    // Double Bezel Border Accent
     ctx.strokeStyle = '#475569';
     ctx.lineWidth = 2.5;
     ctx.stroke();
@@ -192,35 +184,35 @@ export class ConsoleShellEngine {
     ctx.strokeRect(screenFrameX + 4, screenFrameY + 4, screenFrameW - 8, screenFrameH - 8);
     ctx.restore();
 
-    const screenX = screenFrameX + screenFrameW * 0.05;
-    const screenY = screenFrameY + screenFrameH * 0.06;
-    const screenW = screenFrameW * 0.9;
-    const screenH = screenFrameH * 0.88;
+    const screenX = screenFrameX + screenFrameW * 0.035;
+    const screenY = screenFrameY + screenFrameH * 0.045;
+    const screenW = screenFrameW * 0.93;
+    const screenH = screenFrameH * 0.91;
 
     // 5. HARDWARE CONTROLS
-    const controlsCenterY = cy + consoleH * 0.73;
+    const controlsCenterY = cy + consoleH * 0.78;
 
     // A) D-PAD (Dark Charcoal Matte)
-    const dpadCenterX = cx + consoleW * 0.26;
-    const dpadSize = consoleW * 0.26;
+    const dpadCenterX = cx + consoleW * 0.25;
+    const dpadSize = consoleW * 0.24;
     this.renderDPad(ctx, dpadCenterX, controlsCenterY, dpadSize, palette);
 
     // B) ACTION BUTTONS A/B/X/Y (Colored 3D Buttons)
-    const actionCenterX = cx + consoleW * 0.74;
-    const actionRadius = consoleW * 0.16;
+    const actionCenterX = cx + consoleW * 0.75;
+    const actionRadius = consoleW * 0.15;
     this.renderActionButtons(ctx, actionCenterX, controlsCenterY, actionRadius, palette, fontParams, time);
 
-    // C) SELECT & START BUTTONS (Slanted Rubber Pills)
+    // C) SELECT & START BUTTONS
     const selectX = cx + consoleW * 0.42;
     const startX = cx + consoleW * 0.58;
-    const pillY = cy + consoleH * 0.91;
+    const pillY = cy + consoleH * 0.935;
     this.renderPillButton(ctx, selectX, pillY, consoleW * 0.09, consoleW * 0.03, 'SELECT', this.springs.btnSelect.val, palette, fontParams, time);
     this.renderPillButton(ctx, startX, pillY, consoleW * 0.09, consoleW * 0.03, 'START', this.springs.btnStart.val, palette, fontParams, time);
 
     // 6. SPEAKER GRILLES
-    const speakerX = cx + consoleW * 0.82;
-    const speakerY = cy + consoleH * 0.91;
-    this.renderSpeakerGrille(ctx, speakerX, speakerY, consoleW * 0.08, palette);
+    const speakerX = cx + consoleW * 0.83;
+    const speakerY = cy + consoleH * 0.935;
+    this.renderSpeakerGrille(ctx, speakerX, speakerY, consoleW * 0.075, palette);
 
     ctx.restore();
 
@@ -236,7 +228,7 @@ export class ConsoleShellEngine {
     ctx.shadowBlur = 6;
     ctx.shadowOffsetY = 3;
 
-    ctx.fillStyle = '#272b34'; // Matte Charcoal
+    ctx.fillStyle = '#272b34';
     ctx.strokeStyle = '#1e2128';
     ctx.lineWidth = 2;
 
@@ -248,34 +240,31 @@ export class ConsoleShellEngine {
     ctx.fill();
     ctx.stroke();
 
-    // Center Pivot Recess
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#1a1c23';
     ctx.beginPath();
     ctx.arc(cx, cy, armW * 0.28, 0, TWO_PI);
     ctx.fill();
 
-    // Tactile Directional Arrow Triangle Markers
     ctx.fillStyle = '#64748b';
-    // Up arrow
     ctx.beginPath();
     ctx.moveTo(cx, cy - armL + 6);
     ctx.lineTo(cx - 5, cy - armL + 12);
     ctx.lineTo(cx + 5, cy - armL + 12);
     ctx.fill();
-    // Down arrow
+
     ctx.beginPath();
     ctx.moveTo(cx, cy + armL - 6);
     ctx.lineTo(cx - 5, cy + armL - 12);
     ctx.lineTo(cx + 5, cy + armL - 12);
     ctx.fill();
-    // Left arrow
+
     ctx.beginPath();
     ctx.moveTo(cx - armL + 6, cy);
     ctx.lineTo(cx - armL + 12, cy - 5);
     ctx.lineTo(cx - armL + 12, cy + 5);
     ctx.fill();
-    // Right arrow
+
     ctx.beginPath();
     ctx.moveTo(cx + armL - 6, cy);
     ctx.lineTo(cx + armL - 12, cy - 5);
@@ -317,7 +306,6 @@ export class ConsoleShellEngine {
       ctx.arc(bx, by, btnRadius, 0, TWO_PI);
       ctx.fill();
 
-      // Top Bevel Specular Arc
       ctx.shadowBlur = 0;
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
       ctx.lineWidth = 2;

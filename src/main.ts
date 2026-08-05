@@ -220,7 +220,6 @@ class SinBoyApp {
     }
   }
 
-  /** Compute single-press leading-edge triggers once per frame */
   private updateInputTriggers() {
     this.inputState.justPressedA = this.inputState.buttonA && !this.prevInputState.buttonA;
     this.inputState.justPressedB = this.inputState.buttonB && !this.prevInputState.buttonB;
@@ -345,7 +344,6 @@ class SinBoyApp {
 
     const timeInSec = timestamp / 1000;
 
-    // Update single-press inputs
     this.updateInputTriggers();
 
     if (this.inMenu) {
@@ -379,7 +377,7 @@ class SinBoyApp {
     // 2. Screen Display
     this.renderScreenContent(screenRect.x, screenRect.y, screenRect.width, screenRect.height, dt, timeInSec);
 
-    // 3. Compact Desktop Side Control Card (Right Side)
+    // 3. Modern Glassmorphic Studio Sidebar (Right Side)
     this.renderSideControlPanel(canvasW, canvasH, timeInSec);
 
     requestAnimationFrame(this.gameLoop.bind(this));
@@ -470,79 +468,101 @@ class SinBoyApp {
   }
 
   // -------------------------------------------------------------------------
-  // CLEAN & COMPACT DESKTOP SIDE CONTROL CARD
+  // HIGH-END GLASSMORPHIC STUDIO SIDEBAR (RIGHT SIDE)
   // -------------------------------------------------------------------------
 
   private renderSideControlPanel(canvasW: number, canvasH: number, time: number) {
-    if (canvasW < 780) return;
+    if (canvasW < 820) return;
 
-    const cardW = Math.min(320, canvasW * 0.26);
-    const cardX = canvasW - cardW - 20;
-    const cardY = 25;
-    const cardH = canvasH - 50;
+    const cardW = Math.min(320, canvasW * 0.25);
+    const cardX = canvasW - cardW - 22;
+    const cardY = 24;
+    const cardH = canvasH - 48;
 
     this.themeButtonsBounds = [];
     this.fontButtonsBounds = [];
     this.devVarButtonsBounds = [];
 
     this.ctx.save();
-    this.ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-    this.ctx.strokeStyle = '#334155';
+    // Glassmorphic Gradient & Glow Border
+    const glassGrad = this.ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
+    glassGrad.addColorStop(0, 'rgba(15, 23, 42, 0.94)');
+    glassGrad.addColorStop(1, 'rgba(30, 41, 59, 0.90)');
+    this.ctx.fillStyle = glassGrad;
+    this.ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
     this.ctx.lineWidth = 1.5;
 
     this.ctx.beginPath();
-    this.ctx.roundRect(cardX, cardY, cardW, cardH, 16);
+    this.ctx.roundRect(cardX, cardY, cardW, cardH, 18);
     this.ctx.fill();
     this.ctx.stroke();
 
-    let curY = cardY + 25;
+    let curY = cardY + 24;
 
-    // Card Header
+    // Header Badge
+    this.ctx.fillStyle = 'rgba(14, 165, 233, 0.15)';
+    this.ctx.fillRect(cardX + 15, curY - 5, cardW - 30, 26);
     ProceduralFontEngine.renderText(
       this.ctx,
-      'CONTROLS & DEV STUDIO',
-      cardX + 15,
-      curY,
-      12,
+      'STUDIO CONTROLS & DEV TUNER',
+      cardX + 22,
+      curY + 12,
+      10,
       '#38bdf8',
       this.fontParams,
       time
     );
-    curY += 25;
+    curY += 34;
 
-    // SECTION 1: KEYBOARD LEGEND CARD
-    this.ctx.fillStyle = '#1e293b';
-    this.ctx.fillRect(cardX + 15, curY, cardW - 30, 90);
+    // 1. KEY LEGEND BADGES CARD
+    this.ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
+    this.ctx.fillRect(cardX + 15, curY, cardW - 30, 110);
+    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    this.ctx.strokeRect(cardX + 15, curY, cardW - 30, 110);
 
-    ProceduralFontEngine.renderText(this.ctx, 'CONTROLS MAP:', cardX + 22, curY + 16, 10, '#f8fafc', this.fontParams, time);
-    ProceduralFontEngine.renderText(this.ctx, 'MOVE / DPAD : ARROWS / WASD', cardX + 22, curY + 34, 9, '#94a3b8', this.fontParams, time);
-    ProceduralFontEngine.renderText(this.ctx, 'ACTION (BTN A) : Z / SPACE / ENTER', cardX + 22, curY + 50, 9, '#94a3b8', this.fontParams, time);
-    ProceduralFontEngine.renderText(this.ctx, 'BACK (BTN B)   : X / SHIFT', cardX + 22, curY + 66, 9, '#94a3b8', this.fontParams, time);
-    ProceduralFontEngine.renderText(this.ctx, 'SHORTCUTS    : TAB:DEV M:MATH T:THEME F:FONT', cardX + 22, curY + 82, 8, '#38bdf8', this.fontParams, time);
+    const keyMappings = [
+      { key: '[WASD / ARROWS]', label: 'DPAD MOVE' },
+      { key: '[SPACE / Z / ENTER]', label: 'BUTTON A (ACTION)' },
+      { key: '[X / SHIFT]', label: 'BUTTON B (BACK)' },
+      { key: '[TAB] DEV  [M] MATH', label: 'INSPECT / TUTORIAL' },
+      { key: '[T] THEME [F] FONT', label: 'STYLE TOGGLES' },
+    ];
 
-    curY += 105;
+    keyMappings.forEach((km, idx) => {
+      const ky = curY + 18 + idx * 19;
+      ProceduralFontEngine.renderText(this.ctx, km.key, cardX + 22, ky, 8, '#f8fafc', this.fontParams, time);
+      ProceduralFontEngine.renderText(this.ctx, km.label, cardX + 150, ky, 8, '#94a3b8', this.fontParams, time);
+    });
 
-    // SECTION 2: THEMES QUICK SELECTOR
+    curY += 124;
+
+    // 2. THEME SELECTOR CARDS
     ProceduralFontEngine.renderText(this.ctx, 'THEME SELECTOR:', cardX + 15, curY, 10, '#f8fafc', this.fontParams, time);
     curY += 15;
 
     const themeKeys: ThemeName[] = ['classicGray', 'paperMath', 'holographic', 'pastelWave', 'cyberpunk', 'synthwave'];
     const btnW = (cardW - 40) / 2;
-    const btnH = 22;
+    const btnH = 24;
 
     themeKeys.forEach((key, idx) => {
       const bx = cardX + 15 + (idx % 2) * (btnW + 10);
       const by = curY + Math.floor(idx / 2) * (btnH + 6);
       const isSelected = key === this.currentThemeKey;
 
-      this.ctx.fillStyle = isSelected ? '#2563eb' : '#1e293b';
+      this.ctx.fillStyle = isSelected ? '#2563eb' : 'rgba(30, 41, 59, 0.8)';
       this.ctx.fillRect(bx, by, btnW, btnH);
+
+      if (isSelected) {
+        this.ctx.strokeStyle = '#60a5fa';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(bx, by, btnW, btnH);
+      }
 
       ProceduralFontEngine.renderText(
         this.ctx,
         THEMES[key].name.toUpperCase(),
-        bx + 4,
-        by + 14,
+        bx + 5,
+        by + 15,
         7.5,
         isSelected ? '#ffffff' : '#cbd5e1',
         this.fontParams,
@@ -552,10 +572,10 @@ class SinBoyApp {
       this.themeButtonsBounds.push({ key, x: bx, y: by, w: btnW, h: btnH });
     });
 
-    curY += Math.ceil(themeKeys.length / 2) * (btnH + 6) + 15;
+    curY += Math.ceil(themeKeys.length / 2) * (btnH + 6) + 16;
 
-    // SECTION 3: FONT MODE QUICK SELECTOR
-    ProceduralFontEngine.renderText(this.ctx, 'PROCEDURAL FONT MODE:', cardX + 15, curY, 10, '#f8fafc', this.fontParams, time);
+    // 3. FONT ENGINE CHIPS
+    ProceduralFontEngine.renderText(this.ctx, 'PROCEDURAL FONT ENGINE:', cardX + 15, curY, 10, '#f8fafc', this.fontParams, time);
     curY += 15;
 
     const fontModes: FontMode[] = ['bezier', 'fourier', 'wave', 'sdf', 'noise', 'lissajous'];
@@ -564,15 +584,21 @@ class SinBoyApp {
       const by = curY + Math.floor(idx / 2) * (btnH + 6);
       const isSelected = mode === this.fontParams.mode;
 
-      this.ctx.fillStyle = isSelected ? '#10b981' : '#1e293b';
+      this.ctx.fillStyle = isSelected ? '#059669' : 'rgba(30, 41, 59, 0.8)';
       this.ctx.fillRect(bx, by, btnW, btnH);
+
+      if (isSelected) {
+        this.ctx.strokeStyle = '#34d399';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(bx, by, btnW, btnH);
+      }
 
       ProceduralFontEngine.renderText(
         this.ctx,
         mode.toUpperCase(),
         bx + 6,
-        by + 14,
-        8,
+        by + 15,
+        7.5,
         isSelected ? '#ffffff' : '#cbd5e1',
         this.fontParams,
         time
@@ -581,9 +607,9 @@ class SinBoyApp {
       this.fontButtonsBounds.push({ mode, x: bx, y: by, w: btnW, h: btnH });
     });
 
-    curY += Math.ceil(fontModes.length / 2) * (btnH + 6) + 15;
+    curY += Math.ceil(fontModes.length / 2) * (btnH + 6) + 16;
 
-    // SECTION 4: DEV MODE PARAMETER TUNER (TAB KEY)
+    // 4. DEV MATH TUNER (TAB KEY)
     ProceduralFontEngine.renderText(this.ctx, 'DEV MATH TUNER (TAB KEY):', cardX + 15, curY, 10, '#f8fafc', this.fontParams, time);
     curY += 15;
 
@@ -593,33 +619,39 @@ class SinBoyApp {
     if (eqs.length > 0) {
       const eq = eqs[0];
       Object.entries(eq.variables).forEach(([vName, vVal]) => {
-        this.ctx.fillStyle = '#1e293b';
-        this.ctx.fillRect(cardX + 15, curY, cardW - 30, 26);
+        this.ctx.fillStyle = 'rgba(30, 41, 59, 0.8)';
+        this.ctx.fillRect(cardX + 15, curY, cardW - 30, 28);
 
         ProceduralFontEngine.renderText(
           this.ctx,
           `${vName} = ${typeof vVal === 'number' ? vVal.toFixed(2) : vVal}`,
           cardX + 22,
-          curY + 16,
+          curY + 17,
           9,
           '#f8fafc',
           this.fontParams,
           time
         );
 
+        // Circular [-] button
         const minusX = cardX + cardW - 65;
         this.ctx.fillStyle = '#ef4444';
-        this.ctx.fillRect(minusX, curY + 3, 20, 20);
-        ProceduralFontEngine.renderText(this.ctx, '-', minusX + 7, curY + 16, 10, '#ffffff', this.fontParams, time);
-        this.devVarButtonsBounds.push({ eqName: eq.name, varName: vName, delta: -2, x: minusX, y: curY + 3, w: 20, h: 20 });
+        this.ctx.beginPath();
+        this.ctx.arc(minusX + 10, curY + 14, 10, 0, Math.PI * 2);
+        this.ctx.fill();
+        ProceduralFontEngine.renderText(this.ctx, '-', minusX + 7, curY + 18, 10, '#ffffff', this.fontParams, time);
+        this.devVarButtonsBounds.push({ eqName: eq.name, varName: vName, delta: -2, x: minusX, y: curY + 4, w: 20, h: 20 });
 
+        // Circular [+] button
         const plusX = cardX + cardW - 40;
         this.ctx.fillStyle = '#10b981';
-        this.ctx.fillRect(plusX, curY + 3, 20, 20);
-        ProceduralFontEngine.renderText(this.ctx, '+', plusX + 6, curY + 16, 10, '#ffffff', this.fontParams, time);
-        this.devVarButtonsBounds.push({ eqName: eq.name, varName: vName, delta: 2, x: plusX, y: curY + 3, w: 20, h: 20 });
+        this.ctx.beginPath();
+        this.ctx.arc(plusX + 10, curY + 14, 10, 0, Math.PI * 2);
+        this.ctx.fill();
+        ProceduralFontEngine.renderText(this.ctx, '+', plusX + 6, curY + 18, 10, '#ffffff', this.fontParams, time);
+        this.devVarButtonsBounds.push({ eqName: eq.name, varName: vName, delta: 2, x: plusX, y: curY + 4, w: 20, h: 20 });
 
-        curY += 30;
+        curY += 32;
       });
     }
 
