@@ -473,9 +473,17 @@ class SinBoyApp {
     // 2. Screen Display
     this.renderScreenContent(screenRect.x, screenRect.y, screenRect.width, screenRect.height, dt, timeInSec);
 
-    this.ctx.restore();
+    // 3. Reality Inspector Overlay (Full Canvas Level)
+    this.realityInspector.renderOverlay(
+      this.ctx,
+      canvasW,
+      canvasH,
+      this.currentPalette,
+      this.fontParams,
+      timeInSec
+    );
 
-    // 3. Compact Clean Sidebar
+    // 4. Compact Clean Sidebar
     this.renderSideControlPanel(canvasW, canvasH, timeInSec);
 
     requestAnimationFrame(this.gameLoop.bind(this));
@@ -552,15 +560,6 @@ class SinBoyApp {
       this.currentPalette,
       this.fontParams,
       this.currentFPS,
-      time
-    );
-
-    this.realityInspector.render(
-      this.ctx,
-      sw,
-      sh,
-      this.currentPalette,
-      this.fontParams,
       time
     );
 

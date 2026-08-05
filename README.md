@@ -38,6 +38,19 @@ Every single physical control rendered on the GameBoy console is **100% clickabl
 
 ---
 
+## 👁️ The "Reality Inspector" Overlay (`M` Key)
+
+Press **`M`** anytime to freeze reality and inspect ANY element on the console shell or screen:
+- **Matte Charcoal D-Pad**: Signed Distance Cross ($\max(|x| - w, |y| - h) \le 0$) — target crosshairs now align **directly over the physical D-Pad hardware control**!
+- **Action Buttons A & B**: Circle Arc SDF & Specular Highlight Arc
+- **Speaker Grille**: Polar Radial Array ($r = 0.08 \cdot \text{size}, \, \theta = \frac{2\pi i}{N}$)
+- **Power LED**: Pulsing Glow Disc ($I(t) = 0.5 + 0.5 \sin(3t)$)
+- **Screen Bezel**: Superellipse Geometry ($|x/a|^m + |y/b|^n \le 1$)
+
+Press **`A`** to cycle target inspection cards and live-modify variables!
+
+---
+
 ## 💻 SinBoy OS Architecture
 
 Booting SinBoy OS presents a complete procedural operating system:
@@ -52,19 +65,6 @@ SinBoy OS
    ├── 🎵 5. AUDIO LAB (Procedural Web Audio Synthesizer)
    └── 🔬 6. MATH LIBRARY (Dictionary & Split-Screen Graph)
 ```
-
----
-
-## 👁️ The "Reality Inspector" Overlay (`M` Key)
-
-Press **`M`** anytime to freeze reality and inspect ANY element on screen:
-- **Speaker Grille**: Polar Radial Array ($r = 0.08 \cdot \text{size}, \, \theta = \frac{2\pi i}{N}$)
-- **D-Pad**: Signed Distance Cross ($\max(|x| - w, |y| - h) \le 0$)
-- **Action Button A**: Circle Arc SDF & Specular Highlight Arc
-- **Power LED**: Pulsing Glow Disc ($I(t) = 0.5 + 0.5 \sin(3t)$)
-- **Screen Bezel**: Superellipse Geometry ($|x/a|^m + |y/b|^n \le 1$)
-
-Click **`EDIT`** on any element to tune parameters and watch the console hardware, typography, or game graphics morph in real time!
 
 ---
 
