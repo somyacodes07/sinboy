@@ -51,6 +51,9 @@ Imagine if an authentic GameBoy had been invented by modern creative technologis
 
 ### 2. 🎵 Polyphonic Procedural Synthesizer Engine
 - **Zero Audio Assets**: Multi-voice chiptune synthesis using Web Audio API math.
+- **Procedural Water Raindrop Splashes**: Realistic water droplet pitch sweeps ($1200\text{Hz} \to 2100\text{Hz}$) + noise splash envelopes synthesized live for `Ripple Wave Lab`!
+- **Tailored Sound Effects for Every Cartridge**:
+  - Jump sweeps (`playJump()`), landing thuds (`playLand()`), laser plasma shots (`playLaser()`), EMP shockwaves (`playEmp()`), season chimes (`playSeasonChime()`), boss spark hits (`playBossHit()`), heavy water splashes (`playWaterSplash()`), and noise explosions (`playExplosion()`).
 - **Live Oscilloscope Synthesizer Waveform Visualizer**: Web Audio `AnalyserNode` rendering live real-time oscilloscope waveforms across the status bar in Dev Mode (`TAB`)!
 - **Dynamic Audio Tempo Acceleration**: BGM tempo accelerates dynamically as score increases or boss phases trigger ($1.0\times \to 1.45\times$ tempo boost).
 - **Auto-Gesture Audio Unlocking**: Resumes `AudioContext` automatically on user gesture across all modern browsers.
@@ -61,15 +64,15 @@ Imagine if an authentic GameBoy had been invented by modern creative technologis
 - Triggers camera shake on jump landings, obstacle collisions, laser impacts, EMP blasts, and Game Over!
 
 ### 4. 🎮 9 Included Mathematical Cartridges
-1. **Wave Runner**: Multi-harmonic terrain ($y(x) = y_0 + A_1 \sin(f_1 x) + A_2 \sin(f_2 x + 1.4) + A_3 \cos(f_3 x + 2.8)$) with lower ground level ($y=255$) for full vertical headroom, endless positive modulo cloud & tree wrapping (`posMod`), balanced single-press jump controls.
+1. **Wave Runner**: Multi-harmonic terrain ($y(x) = y_0 + A_1 \sin(f_1 x) + A_2 \sin(f_2 x + 1.4) + A_3 \cos(f_3 x + 2.8)$) with lower ground level ($y=255$) for full vertical headroom, endless positive modulo cloud & tree wrapping (`posMod`), jump sweep & landing thud audio.
 2. **Orbit Survivor**: Single-press plasma counter-missile laser shooting, orbital Lissajous track, glowing cyan player orb, ruby enemies.
-3. **Particle Dodge**: Vector field grid with speed-colored boid arrows, glowing amber player vessel, EMP shockwave pulse on Button A.
-4. **Wave Snake**: Emerald green undulated snake utilizing full vertical screen bounds ($15 \le y \le 305$), golden glowing apples, soft meadow background, single-press restart logic.
-5. **Fractal Forest**: Natural timber wood trunks branching into foliage with seasonal morphing (Spring, Autumn, Sakura, Cyber Neon) on Button A.
-6. **Ripple Wave Lab**: Deep ocean blue water ripple simulation with turquoise caustics, single-press splashes, and automatic raindrop generator.
+3. **Particle Dodge**: Vector field grid with speed-colored boid arrows, glowing amber player vessel, EMP shockwave pulse (`playEmp()`) on Button A.
+4. **Wave Snake**: Emerald green undulated snake utilizing full vertical screen bounds ($15 \le y \le 305$), golden glowing apples with pickup chimes (`playPickup()`), soft meadow background.
+5. **Fractal Forest**: Natural timber wood trunks branching into foliage with seasonal morphing (Spring, Autumn, Sakura, Cyber Neon) on Button A with harmonic season chimes (`playSeasonChime()`).
+6. **Ripple Wave Lab**: Deep ocean blue water ripple simulation with turquoise caustics, heavy water splashes (`playWaterSplash()`), and procedural raindrop droplets (`playRaindrop()`).
 7. **Chaos Laboratory**: Interactive 3D camera rotation using D-Pad across Lorenz Attractor & Logistic Map bifurcation.
 8. **Fourier Epicycle Painter**: Reconstruct multi-shape vector artwork (Star, Heart, Butterfly) via rotating Fourier series epicycles.
-9. **Lissajous Arena**: Multi-phase boss battle with dynamic Lissajous kinematics ($x=\sin(1.8t), y=\sin(2.7t)$), polar rose forcefields, targeted plasma projectiles, 8-way radial shockwaves, and player combat.
+9. **Lissajous Arena**: Multi-phase boss battle with dynamic Lissajous kinematics ($x=\sin(1.8t), y=\sin(2.7t)$), polar rose forcefields, targeted plasma projectiles, 8-way radial shockwaves, boss hit spark SFX (`playBossHit()`), and player combat.
 
 ### 5. 🛠️ Developer Mode & Education Mode
 - **Developer Mode (`TAB` key)**: Transforms console & side panel into live equation editor. Click `[-]` / `[+]` or press Arrow Keys to tune variables ($A$, $f$, $v$, $\text{epicycles}$) in real-time.
@@ -83,7 +86,7 @@ Imagine if an authentic GameBoy had been invented by modern creative technologis
 | Key | Action |
 | :--- | :--- |
 | **Arrow Keys / WASD** | D-Pad Navigation / Movement / 3D Cam / Dev Var Tuning |
-| **Z / Space / Enter** | Button A (Action / Jump / Shoot / Launch / Season) |
+| **Z / Space / Enter** | Button A (Action / Jump / Shoot / Launch / Season / Splash) |
 | **X** | Button B (Back / Cancel) |
 | **TAB** | Toggle **Developer Mode Equation Inspector** |
 | **M** | Toggle **Math Education Overlay** |
