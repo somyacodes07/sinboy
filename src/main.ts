@@ -1,6 +1,6 @@
 /**
- * SinBoy Master Controller & System Entry Point
- * "The handheld console where mathematics creates reality."
+ * SinBoy OS Master Controller & System Router Entry Point
+ * "I built a procedural mathematics operating system where games, UI, typography, audio, graphics, and even the console hardware are generated from equations."
  */
 
 import { ConsoleShellEngine, HardwareInputState } from './graphics/consoleShell';
@@ -23,9 +23,13 @@ import { ChaosLabCartridge } from './games/cartridges/chaosLab';
 import { FourierPainterCartridge } from './games/cartridges/fourierPainter';
 import { LissajousArenaCartridge } from './games/cartridges/lissajousArena';
 
-// Inspector & Education Mode
+// Inspector, Labs & Reality Inspector
 import { EquationInspectorEngine } from './ui/equationInspector';
 import { EducationModeEngine } from './ui/educationMode';
+import { LabsEngine, LabMode } from './ui/labsEngine';
+import { RealityInspectorEngine } from './ui/realityInspector';
+
+type OSMenuSection = 'PLAY' | 'FONT_LAB' | 'ICON_LAB' | 'WALLPAPER_LAB' | 'AUDIO_LAB' | 'MATH_LIBRARY';
 
 class SinBoyApp {
   private canvas: HTMLCanvasElement;
@@ -34,6 +38,8 @@ class SinBoyApp {
   private consoleShell: ConsoleShellEngine;
   private inspector: EquationInspectorEngine;
   private education: EducationModeEngine;
+  private labs: LabsEngine;
+  private realityInspector: RealityInspectorEngine;
 
   // System State
   private isPoweredOn: boolean = false;
@@ -52,7 +58,16 @@ class SinBoyApp {
   private cartridges: BaseCartridge[] = [];
   private activeCartridgeIdx: number = 0;
   private inMenu: boolean = true;
-  private menuSelection: number = 0;
+  private osMenuSelection: number = 0;
+
+  private osSections: { id: OSMenuSection; title: string; desc: string }[] = [
+    { id: 'PLAY', title: '1. PLAY CARTRIDGES', desc: '9 Interactive Procedural Games' },
+    { id: 'FONT_LAB', title: '2. FONT LAB', desc: 'Live Vector Typography Generator' },
+    { id: 'ICON_LAB', title: '3. ICON LAB', desc: 'Signed Distance Field Icon Builder' },
+    { id: 'WALLPAPER_LAB', title: '4. WALLPAPER LAB', desc: 'Domain Warping & Flow Fields' },
+    { id: 'AUDIO_LAB', title: '5. AUDIO LAB', desc: 'Procedural Web Audio Synthesizer' },
+    { id: 'MATH_LIBRARY', title: '6. MATH LIBRARY', desc: 'Interactive Dictionary & Split-Screen Graph' },
+  ];
 
   // Modals & Panels
   private showThemeMenu: boolean = false;
@@ -105,6 +120,8 @@ class SinBoyApp {
     this.consoleShell = new ConsoleShellEngine();
     this.inspector = new EquationInspectorEngine();
     this.education = new EducationModeEngine();
+    this.labs = new LabsEngine();
+    this.realityInspector = new RealityInspectorEngine();
 
     this.initCartridges();
     this.setupWindowEvents();
@@ -157,7 +174,7 @@ class SinBoyApp {
         return;
       }
       if (e.key === 'm' || e.key === 'M') {
-        this.education.toggleActive();
+        this.realityInspector.toggleActive();
         soundEngine.playClick(700);
         return;
       }
@@ -318,17 +335,36 @@ class SinBoyApp {
     }
 
     if (this.inputState.justPressedUp) {
-      this.menuSelection = (this.menuSelection - 1 + this.cartridges.length) % this.cartridges.length;
+      this.osMenuSelection = (this.osMenuSelection - 1 + this.osSections.length) % this.osSections.length;
       soundEngine.playClick(500);
     } else if (this.inputState.justPressedDown) {
-      this.menuSelection = (this.menuSelection + 1) % this.cartridges.length;
+      this.osMenuSelection = (this.osMenuSelection + 1) % this.osSections.length;
       soundEngine.playClick(500);
     } else if (this.inputState.justPressedA || (this.inputState.buttonStart && !this.prevInputState.buttonA)) {
-      this.activeCartridgeIdx = this.menuSelection;
-      this.cartridges[this.activeCartridgeIdx].reset();
-      this.inMenu = false;
+      const selected = this.osSections[this.osMenuSelection];
       soundEngine.playClick(750);
-      soundEngine.startBGM(this.activeCartridgeIdx % 2 === 0 ? 'default' : 'synthwave');
+
+      if (selected.id === 'PLAY') {
+        this.activeCartridgeIdx = 0;
+        this.cartridges[this.activeCartridgeIdx].reset();
+        this.inMenu = false;
+        soundEngine.startBGM('default');
+      } else if (selected.id === 'FONT_LAB') {
+        this.labs.setActiveLab('fontLab');
+        this.inMenu = false;
+      } else if (selected.id === 'ICON_LAB') {
+        this.labs.setActiveLab('iconLab');
+        this.inMenu = false;
+      } else if (selected.id === 'WALLPAPER_LAB') {
+        this.labs.setActiveLab('wallpaperLab');
+        this.inMenu = false;
+      } else if (selected.id === 'AUDIO_LAB') {
+        this.labs.setActiveLab('audioLab');
+        this.inMenu = false;
+      } else if (selected.id === 'MATH_LIBRARY') {
+        this.labs.setActiveLab('mathLibrary');
+        this.inMenu = false;
+      }
     }
   }
 
@@ -347,7 +383,12 @@ class SinBoyApp {
 
     if (this.inMenu) {
       this.handleMenuInput();
+    } else if (this.labs.getActiveLab() !== 'none') {
+      this.labs.handleInput(this.inputState, soundEngine);
+      if (this.labs.getActiveLab() === 'none') this.inMenu = true;
     }
+
+    this.realityInspector.updateInput(dt, this.inputState, soundEngine);
 
     this.frameCount++;
     this.fpsTimer += dt;
@@ -357,7 +398,7 @@ class SinBoyApp {
       this.fpsTimer = 0;
     }
 
-    // Dynamic Screen Shake Physics (Exponential Damped Oscillation)
+    // Dynamic Screen Shake Physics
     let shakeX = 0;
     let shakeY = 0;
     if (this.shakeAmp > 0.1) {
@@ -392,7 +433,7 @@ class SinBoyApp {
 
     this.ctx.restore();
 
-    // 3. Compact Clean Sidebar (Right Side)
+    // 3. Compact Clean Sidebar
     this.renderSideControlPanel(canvasW, canvasH, timeInSec);
 
     requestAnimationFrame(this.gameLoop.bind(this));
@@ -436,12 +477,13 @@ class SinBoyApp {
     const activeCartridge = this.cartridges[this.activeCartridgeIdx];
 
     if (this.inMenu) {
-      this.renderCartridgeMenu(sw, sh, time);
+      this.renderOSMenu(sw, sh, time);
+    } else if (this.labs.getActiveLab() !== 'none') {
+      this.labs.render(this.ctx, sw, sh, this.currentPalette, this.fontParams, time);
     } else {
       activeCartridge.update(dt, this.inputState, soundEngine);
       activeCartridge.render(this.ctx, sw, sh, this.currentPalette, this.fontParams, time);
 
-      // Trigger screen shake on Game Over
       if ((activeCartridge as any).gameOver && this.shakeAmp <= 0) {
         this.triggerScreenShake(12);
       }
@@ -471,11 +513,10 @@ class SinBoyApp {
       time
     );
 
-    this.education.renderOverlay(
+    this.realityInspector.render(
       this.ctx,
       sw,
       sh,
-      activeCartridge,
       this.currentPalette,
       this.fontParams,
       time
@@ -486,10 +527,6 @@ class SinBoyApp {
 
     this.ctx.restore();
   }
-
-  // -------------------------------------------------------------------------
-  // CLEAN, COMPACT, MINIMAL SIDEBAR (NO WASTED FONTS)
-  // -------------------------------------------------------------------------
 
   private renderSideControlPanel(canvasW: number, canvasH: number, time: number) {
     if (canvasW < 840) return;
@@ -515,10 +552,9 @@ class SinBoyApp {
 
     let curY = cardY + 22;
 
-    // Header
     ProceduralFontEngine.renderText(
       this.ctx,
-      'STUDIO CONTROLS',
+      'SINBOY OS STUDIO',
       cardX + 15,
       curY,
       11,
@@ -528,7 +564,6 @@ class SinBoyApp {
     );
     curY += 28;
 
-    // 1. KEY LEGEND
     this.ctx.fillStyle = '#1e293b';
     this.ctx.fillRect(cardX + 12, curY, cardW - 24, 88);
 
@@ -536,7 +571,7 @@ class SinBoyApp {
       { k: 'WASD / ARROWS', v: 'MOVE' },
       { k: 'Z / SPACE', v: 'ACTION' },
       { k: 'X / SHIFT', v: 'BACK' },
-      { k: 'TAB / M', v: 'DEV / MATH' },
+      { k: 'TAB / M', v: 'INSPECT REALITY' },
       { k: 'T / F', v: 'THEME / FONT' },
     ];
 
@@ -548,7 +583,6 @@ class SinBoyApp {
 
     curY += 102;
 
-    // 2. THEME SELECTOR
     ProceduralFontEngine.renderText(this.ctx, 'THEME SELECTOR:', cardX + 15, curY, 9.5, '#f8fafc', this.fontParams, time);
     curY += 14;
 
@@ -580,7 +614,6 @@ class SinBoyApp {
 
     curY += Math.ceil(themeKeys.length / 2) * (btnH + 5) + 14;
 
-    // 3. CLEAN PROCEDURAL FONTS (ONLY 3 CRISP MATH FONTS: BEZIER, FOURIER, WAVE)
     ProceduralFontEngine.renderText(this.ctx, 'CLEAN MATH FONTS:', cardX + 15, curY, 9.5, '#f8fafc', this.fontParams, time);
     curY += 14;
 
@@ -609,7 +642,6 @@ class SinBoyApp {
 
     curY += btnH + 16;
 
-    // 4. DEV MATH TUNER (TAB KEY)
     ProceduralFontEngine.renderText(this.ctx, 'DEV MATH TUNER (TAB KEY):', cardX + 15, curY, 9.5, '#f8fafc', this.fontParams, time);
     curY += 14;
 
@@ -691,7 +723,7 @@ class SinBoyApp {
 
     ProceduralFontEngine.renderText(
       this.ctx,
-      'TAB:DEV  M:MATH  T:THEME  F:FONT',
+      'TAB:DEV  M:INSPECT REALITY  T:THEME  F:FONT',
       10,
       14,
       9,
@@ -700,7 +732,6 @@ class SinBoyApp {
       time
     );
 
-    // LIVE OSCILLOSCOPE SYNTHESIZER WAVEFORM MONITOR IN DEV MODE (TAB)
     if (this.inspector.isInspectorActive()) {
       const waveform = soundEngine.getWaveformData();
       this.ctx.strokeStyle = '#38bdf8';
@@ -723,54 +754,65 @@ class SinBoyApp {
     }
   }
 
-  private renderCartridgeMenu(width: number, height: number, time: number) {
+  private renderOSMenu(width: number, height: number, time: number) {
     const cx = width * 0.5;
 
     ProceduralFontEngine.renderText(
       this.ctx,
-      'CARTRIDGE LIBRARY',
-      cx - 90,
-      38,
-      15,
+      'SINBOY OS LAUNCHER',
+      cx - 110,
+      35,
+      16,
       this.currentPalette.textPrimary,
       this.fontParams,
       time
     );
 
-    const startY = 65;
-    const itemH = 24;
+    const startY = 70;
+    const itemH = 32;
 
-    this.cartridges.forEach((cart, idx) => {
+    this.osSections.forEach((sec, idx) => {
       const itemY = startY + idx * itemH;
-      const isSelected = idx === this.menuSelection;
+      const isSelected = idx === this.osMenuSelection;
       const color = isSelected ? this.currentPalette.shellAccent : this.currentPalette.textSecondary;
 
       if (isSelected) {
-        const waveX = 25 + Math.sin(time * 6.0) * 4;
-        ProceduralFontEngine.renderText(this.ctx, '>', waveX, itemY, 12, color, this.fontParams, time);
+        const waveX = 22 + Math.sin(time * 6.0) * 4;
+        ProceduralFontEngine.renderText(this.ctx, '>', waveX, itemY, 13, color, this.fontParams, time);
       }
 
       ProceduralFontEngine.renderText(
         this.ctx,
-        `${idx + 1}. ${cart.name.toUpperCase()}`,
-        42,
+        sec.title,
+        38,
         itemY,
         12,
         color,
         this.fontParams,
         time
       );
+
+      ProceduralFontEngine.renderText(
+        this.ctx,
+        sec.desc,
+        240,
+        itemY + 1,
+        9,
+        isSelected ? this.currentPalette.textPrimary : 'rgba(148, 163, 184, 0.6)',
+        this.fontParams,
+        time
+      );
     });
 
-    const selectedCart = this.cartridges[this.menuSelection];
-    const infoY = height - 42;
+    const selectedSec = this.osSections[this.osMenuSelection];
+    const infoY = height - 40;
 
     this.ctx.fillStyle = this.currentPalette.isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.4)';
-    this.ctx.fillRect(15, infoY - 10, width - 30, 42);
+    this.ctx.fillRect(15, infoY - 10, width - 30, 38);
 
     ProceduralFontEngine.renderText(
       this.ctx,
-      `TOPIC: ${selectedCart.mathTopic}`,
+      `SELECTED MODULE: ${selectedSec.title}`,
       22,
       infoY + 6,
       10,
@@ -781,9 +823,9 @@ class SinBoyApp {
 
     ProceduralFontEngine.renderText(
       this.ctx,
-      'PRESS A OR ENTER TO LAUNCH',
+      'PRESS A OR ENTER TO OPEN MODULE',
       22,
-      infoY + 22,
+      infoY + 20,
       9,
       this.currentPalette.shellAccent,
       this.fontParams,
