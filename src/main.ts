@@ -58,10 +58,12 @@ class SinBoyApp {
   private cartridges: BaseCartridge[] = [];
   private activeCartridgeIdx: number = 0;
   private inMenu: boolean = true;
+  private inCartridgeSubmenu: boolean = false;
   private osMenuSelection: number = 0;
+  private cartMenuSelection: number = 0;
 
   private osSections: { id: OSMenuSection; title: string; desc: string }[] = [
-    { id: 'PLAY', title: '1. PLAY CARTRIDGES', desc: '9 Interactive Procedural Games' },
+    { id: 'PLAY', title: '1. PLAY CARTRIDGES', desc: 'Launch Wave Runner & 9 Games' },
     { id: 'FONT_LAB', title: '2. FONT LAB', desc: 'Live Vector Typography Generator' },
     { id: 'ICON_LAB', title: '3. ICON LAB', desc: 'Signed Distance Field Icon Builder' },
     { id: 'WALLPAPER_LAB', title: '4. WALLPAPER LAB', desc: 'Domain Warping & Flow Fields' },
@@ -196,7 +198,6 @@ class SinBoyApp {
       this.updateKeyboardState(e.code, false);
     });
 
-    // Mobile & Desktop Touch/Click Input Handlers
     this.canvas.addEventListener('pointerdown', (e) => this.handlePointerInput(e, true));
     this.canvas.addEventListener('pointermove', (e) => {
       if (e.buttons > 0) this.handlePointerInput(e, true);
@@ -254,7 +255,6 @@ class SinBoyApp {
     const clickY = e.clientY - rect.top;
 
     if (isPressed) {
-      // Check Side Panel Buttons
       for (const btn of this.themeButtonsBounds) {
         if (clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h) {
           this.currentThemeKey = btn.key;
@@ -282,7 +282,6 @@ class SinBoyApp {
       }
     }
 
-    // Physical GameBoy Control Hitbox Check
     const hitboxes = this.consoleShell.getControlHitboxes();
     let hitAny = false;
 
@@ -303,7 +302,6 @@ class SinBoyApp {
       }
     });
 
-    // Merge Touch & Keyboard Inputs
     this.inputState.dpadLeft = !!this.touchInputState['dpadLeft'] || this.inputState.dpadLeft;
     this.inputState.dpadRight = !!this.touchInputState['dpadRight'] || this.inputState.dpadRight;
     this.inputState.dpadUp = !!this.touchInputState['dpadUp'] || this.inputState.dpadUp;
@@ -376,6 +374,29 @@ class SinBoyApp {
       return;
     }
 
+    // Submenu for Selecting Cartridges
+    if (this.inCartridgeSubmenu) {
+      if (this.inputState.justPressedUp) {
+        this.cartMenuSelection = (this.cartMenuSelection - 1 + this.cartridges.length) % this.cartridges.length;
+        soundEngine.playClick(500);
+      } else if (this.inputState.justPressedDown) {
+        this.cartMenuSelection = (this.cartMenuSelection + 1) % this.cartridges.length;
+        soundEngine.playClick(500);
+      } else if (this.inputState.justPressedA || (this.inputState.buttonStart && !this.prevInputState.buttonA)) {
+        this.activeCartridgeIdx = this.cartMenuSelection;
+        this.cartridges[this.activeCartridgeIdx].reset();
+        this.inMenu = false;
+        this.inCartridgeSubmenu = false;
+        soundEngine.playClick(750);
+        soundEngine.startBGM(this.activeCartridgeIdx % 2 === 0 ? 'default' : 'synthwave');
+      } else if (this.inputState.justPressedB) {
+        this.inCartridgeSubmenu = false;
+        soundEngine.playClick(400);
+      }
+      return;
+    }
+
+    // Top Level OS Menu
     if (this.inputState.justPressedUp) {
       this.osMenuSelection = (this.osMenuSelection - 1 + this.osSections.length) % this.osSections.length;
       soundEngine.playClick(500);
@@ -387,10 +408,8 @@ class SinBoyApp {
       soundEngine.playClick(750);
 
       if (selected.id === 'PLAY') {
-        this.activeCartridgeIdx = 0;
-        this.cartridges[this.activeCartridgeIdx].reset();
-        this.inMenu = false;
-        soundEngine.startBGM('default');
+        this.inCartridgeSubmenu = true;
+        this.cartMenuSelection = 0; // Wave Runner as default 0 selection!
       } else if (selected.id === 'FONT_LAB') {
         this.labs.setActiveLab('fontLab');
         this.inMenu = false;
@@ -473,6 +492,8 @@ class SinBoyApp {
     // 2. Screen Display
     this.renderScreenContent(screenRect.x, screenRect.y, screenRect.width, screenRect.height, dt, timeInSec);
 
+    this.ctx.restore();
+
     // 3. Reality Inspector Overlay (Full Canvas Level)
     this.realityInspector.renderOverlay(
       this.ctx,
@@ -527,7 +548,11 @@ class SinBoyApp {
     const activeCartridge = this.cartridges[this.activeCartridgeIdx];
 
     if (this.inMenu) {
-      this.renderOSMenu(sw, sh, time);
+      if (this.inCartridgeSubmenu) {
+        this.renderCartridgeSubmenu(sw, sh, time);
+      } else {
+        this.renderOSMenu(sw, sh, time);
+      }
     } else if (this.labs.getActiveLab() !== 'none') {
       this.labs.render(this.ctx, sw, sh, this.currentPalette, this.fontParams, time);
     } else {
@@ -540,6 +565,7 @@ class SinBoyApp {
 
       if (this.inputState.justPressedB || this.inputState.buttonSelect) {
         this.inMenu = true;
+        this.inCartridgeSubmenu = true;
         soundEngine.stopBGM();
         soundEngine.playClick(400);
       }
@@ -567,6 +593,74 @@ class SinBoyApp {
     PostFXEngine.renderCRTOverlay(this.ctx, sw, sh, this.currentPalette, time);
 
     this.ctx.restore();
+  }
+
+  private renderCartridgeSubmenu(width: number, height: number, time: number) {
+    const cx = width * 0.5;
+
+    ProceduralFontEngine.renderText(
+      this.ctx,
+      'PLAY CARTRIDGES',
+      cx - 80,
+      35,
+      15,
+      this.currentPalette.textPrimary,
+      this.fontParams,
+      time
+    );
+
+    const startY = 65;
+    const itemH = 24;
+
+    this.cartridges.forEach((cart, idx) => {
+      const itemY = startY + idx * itemH;
+      const isSelected = idx === this.cartMenuSelection;
+      const color = isSelected ? this.currentPalette.shellAccent : this.currentPalette.textSecondary;
+
+      if (isSelected) {
+        const waveX = 22 + Math.sin(time * 6.0) * 4;
+        ProceduralFontEngine.renderText(this.ctx, '>', waveX, itemY, 12, color, this.fontParams, time);
+      }
+
+      ProceduralFontEngine.renderText(
+        this.ctx,
+        `${idx + 1}. ${cart.name.toUpperCase()}`,
+        38,
+        itemY,
+        12,
+        color,
+        this.fontParams,
+        time
+      );
+    });
+
+    const selectedCart = this.cartridges[this.cartMenuSelection];
+    const infoY = height - 42;
+
+    this.ctx.fillStyle = this.currentPalette.isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.4)';
+    this.ctx.fillRect(15, infoY - 10, width - 30, 42);
+
+    ProceduralFontEngine.renderText(
+      this.ctx,
+      `TOPIC: ${selectedCart.mathTopic}`,
+      22,
+      infoY + 6,
+      10,
+      this.currentPalette.textPrimary,
+      this.fontParams,
+      time
+    );
+
+    ProceduralFontEngine.renderText(
+      this.ctx,
+      'PRESS A OR ENTER TO LAUNCH GAME (B: BACK)',
+      22,
+      infoY + 22,
+      9,
+      this.currentPalette.shellAccent,
+      this.fontParams,
+      time
+    );
   }
 
   private renderSideControlPanel(canvasW: number, canvasH: number, time: number) {
