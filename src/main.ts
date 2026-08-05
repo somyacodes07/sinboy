@@ -384,13 +384,23 @@ class SinBoyApp {
         soundEngine.playClick(500);
       } else if (this.inputState.justPressedA || (this.inputState.buttonStart && !this.prevInputState.buttonA)) {
         this.activeCartridgeIdx = this.cartMenuSelection;
-        this.cartridges[this.activeCartridgeIdx].reset();
+        const selectedCart = this.cartridges[this.activeCartridgeIdx];
+        selectedCart.reset();
+
         this.inMenu = false;
         this.inCartridgeSubmenu = false;
         soundEngine.playClick(750);
-        soundEngine.startBGM(this.activeCartridgeIdx % 2 === 0 ? 'default' : 'synthwave');
+
+        // ONLY start BGM for fast-paced action games! Turn OFF BGM for ambient games (Ripple Rain, Fractal Forest, Chaos Lab, Fourier Painter)
+        const actionGameIds = ['wave_runner', 'orbit_survivor', 'particle_dodge', 'wave_snake', 'lissajous_arena'];
+        if (actionGameIds.includes(selectedCart.id)) {
+          soundEngine.startBGM(this.activeCartridgeIdx % 2 === 0 ? 'default' : 'synthwave');
+        } else {
+          soundEngine.stopBGM();
+        }
       } else if (this.inputState.justPressedB) {
         this.inCartridgeSubmenu = false;
+        soundEngine.stopBGM();
         soundEngine.playClick(400);
       }
       return;
@@ -409,22 +419,28 @@ class SinBoyApp {
 
       if (selected.id === 'PLAY') {
         this.inCartridgeSubmenu = true;
-        this.cartMenuSelection = 0; // Wave Runner as default 0 selection!
+        this.cartMenuSelection = 0;
+        soundEngine.stopBGM();
       } else if (selected.id === 'FONT_LAB') {
         this.labs.setActiveLab('fontLab');
         this.inMenu = false;
+        soundEngine.stopBGM();
       } else if (selected.id === 'ICON_LAB') {
         this.labs.setActiveLab('iconLab');
         this.inMenu = false;
+        soundEngine.stopBGM();
       } else if (selected.id === 'WALLPAPER_LAB') {
         this.labs.setActiveLab('wallpaperLab');
         this.inMenu = false;
+        soundEngine.stopBGM();
       } else if (selected.id === 'AUDIO_LAB') {
         this.labs.setActiveLab('audioLab');
         this.inMenu = false;
+        soundEngine.stopBGM();
       } else if (selected.id === 'MATH_LIBRARY') {
         this.labs.setActiveLab('mathLibrary');
         this.inMenu = false;
+        soundEngine.stopBGM();
       }
     }
   }
@@ -446,7 +462,10 @@ class SinBoyApp {
       this.handleMenuInput();
     } else if (this.labs.getActiveLab() !== 'none') {
       this.labs.handleInput(this.inputState, soundEngine);
-      if (this.labs.getActiveLab() === 'none') this.inMenu = true;
+      if (this.labs.getActiveLab() === 'none') {
+        this.inMenu = true;
+        soundEngine.stopBGM();
+      }
     }
 
     this.realityInspector.updateInput(dt, this.inputState, soundEngine);
